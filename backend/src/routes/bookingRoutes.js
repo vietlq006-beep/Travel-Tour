@@ -1,0 +1,14 @@
+const router = require('express').Router();
+const c = require('../controllers/bookingController');
+const wrap = require('../utils/asyncHandler');
+const validate = require('../middlewares/validateRequest');
+const { authenticateToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { validateCreateBooking, validateBookingStatus } = require('../validators/bookingValidator');
+const { validateIdParam, validatePagination } = require('../validators/commonValidator');
+router.use(authenticateToken);
+router.get('/', validate(validatePagination), wrap(c.list));
+router.post('/', validate(validateCreateBooking), wrap(c.create));
+router.post('/:id/cancel', validate(validateIdParam), wrap(c.cancel));
+router.patch('/:id/status', authorizeRoles('ADMIN'), validate(validateIdParam), validate(validateBookingStatus), wrap(c.changeStatus));
+router.get('/:id', validate(validateIdParam), wrap(c.get));
+module.exports = router;

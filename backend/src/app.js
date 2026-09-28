@@ -47,6 +47,7 @@ app.use('/api/tours/:tourId/itineraries', require('./routes/itineraryRoutes'));
 app.use('/api/tours', require('./routes/tourRoutes'));
 app.use('/api/departures', require('./routes/departureRoutes'));
 app.use('/api/vouchers', require('./routes/voucherRoutes'));
+app.use('/api/bookings', require('./routes/bookingRoutes'));
 
 app.use('*', (req, res) => ApiResponse.error(
   res,
