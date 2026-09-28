@@ -14,6 +14,7 @@ class VoucherService {
     const item = await this.get(id);
     const merged = { ...item.get(), ...data };
     if (new Date(merged.endDate) <= new Date(merged.startDate)) throw new AppError('Ngày kết thúc phải sau ngày bắt đầu.', 422);
+    if (merged.discountType === 'PERCENT' && Number(merged.discountValue) > 100) throw new AppError('Phần trăm giảm không được vượt quá 100.', 422);
     if (Number(merged.maxUsage) < item.usedCount) throw new AppError('Lượt dùng tối đa không được nhỏ hơn lượt đã dùng.', 409);
     if (data.code) data.code = data.code.trim().toUpperCase();
     return item.update(data);
