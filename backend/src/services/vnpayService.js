@@ -52,4 +52,4 @@ const verifyCallback = (rawParams) => {
   return { valid, params };
 };
 
-module.exports = { createPaymentUrl, verifyCallback, formatVnPayDate, sortedQuery };
+module.exports = { createPaymentUrl, verifyCallback, formatVnPayDate, sortedQuery, assertConfigured };
