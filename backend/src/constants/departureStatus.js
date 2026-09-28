@@ -1,0 +1,8 @@
+const DEPARTURE_STATUS = Object.freeze({
+  OPEN: 'OPEN',
+  CLOSED: 'CLOSED',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED'
+});
+
+module.exports = DEPARTURE_STATUS;
