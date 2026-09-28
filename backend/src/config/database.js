@@ -17,10 +17,10 @@ const sequelize = new Sequelize(
       freezeTableName: true
     },
     pool: {
-      max: 10,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
+      max: Number(process.env.DB_POOL_MAX) || 10,
+      min: Number(process.env.DB_POOL_MIN) || 0,
+      acquire: Number(process.env.DB_POOL_ACQUIRE_MS) || 30000,
+      idle: Number(process.env.DB_POOL_IDLE_MS) || 10000
     }
   }
 );

@@ -11,6 +11,7 @@ const app = express();
 const configuredOrigins = [process.env.CLIENT_ADMIN_URL, process.env.CLIENT_CUSTOMER_URL].filter(Boolean);
 
 app.disable('x-powered-by');
+if (process.env.TRUST_PROXY) app.set('trust proxy', Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY);
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors({
   origin(origin, callback) {
