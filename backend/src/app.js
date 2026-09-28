@@ -49,6 +49,7 @@ app.use('/api/departures', require('./routes/departureRoutes'));
 app.use('/api/vouchers', require('./routes/voucherRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/reviews', require('./routes/reviewRoutes'));
 
 app.use('*', (req, res) => ApiResponse.error(
   res,
