@@ -1,0 +1,14 @@
+const router = require('express').Router({ mergeParams: true });
+const c = require('../controllers/itineraryController');
+const wrap = require('../utils/asyncHandler');
+const validate = require('../middlewares/validateRequest');
+const { authenticateToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { validateItinerary } = require('../validators/itineraryValidator');
+const { validateIdParam } = require('../validators/commonValidator');
+router.get('/', wrap(c.list));
+router.use(authenticateToken, authorizeRoles('ADMIN'));
+router.post('/', validate(validateItinerary), wrap(c.create));
+router.put('/replace-all', wrap(c.replaceAll));
+router.put('/:id', validate(validateIdParam), validate(validateItinerary), wrap(c.update));
+router.delete('/:id', validate(validateIdParam), wrap(c.remove));
+module.exports = router;
