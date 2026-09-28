@@ -52,7 +52,14 @@ const authorizeRoles = (...roles) => {
   };
 };
 
+/** Gắn người dùng nếu có Bearer token, nhưng vẫn cho phép khách vãng lai. */
+const optionalAuthenticate = (req, res, next) => {
+  if (!req.headers.authorization?.startsWith('Bearer ')) return next();
+  return authenticateToken(req, res, next);
+};
+
 module.exports = {
   authenticateToken,
-  authorizeRoles
+  authorizeRoles,
+  optionalAuthenticate
 };
