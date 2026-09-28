@@ -6,6 +6,9 @@ const {
   Hotel,
   Vehicle,
   TourGuide,
+  Tour,
+  TourItinerary,
+  TourDeparture,
   Voucher,
   sequelize
 } = require('../../models');
@@ -96,7 +99,53 @@ const runSeed = async () => {
       console.log('   ✅ Đã tạo 2 Hướng dẫn viên du lịch mẫu');
     }
 
-    // 7. Tạo Voucher mẫu
+    // 7. Tạo tour, lịch trình và đợt khởi hành mẫu
+    const tourCount = await Tour.count();
+    if (tourCount === 0) {
+      await sequelize.transaction(async (transaction) => {
+        const [category, destinations, hotel, vehicle, guide] = await Promise.all([
+          Category.findOne({ order: [['id', 'ASC']], transaction }),
+          Destination.findAll({ order: [['id', 'ASC']], limit: 2, transaction }),
+          Hotel.findOne({ order: [['id', 'ASC']], transaction }),
+          Vehicle.findOne({ order: [['id', 'ASC']], transaction }),
+          TourGuide.findOne({ order: [['id', 'ASC']], transaction })
+        ]);
+        const tour = await Tour.create({
+        categoryId: category.id,
+        code: 'DANANG-HOIAN-3N2D',
+        name: 'Đà Nẵng - Hội An 3 ngày 2 đêm',
+        durationDays: 3,
+        durationNights: 2,
+        overview: 'Khám phá biển Đà Nẵng, bán đảo Sơn Trà và phố cổ Hội An.',
+        thumbnail: 'https://images.unsplash.com/photo-1528127269322-539801943592',
+        images: [],
+        isActive: true
+        }, { transaction });
+        await tour.setDestinations(destinations.map((item) => item.id), { transaction });
+        await TourItinerary.bulkCreate([
+        { tourId: tour.id, dayNumber: 1, title: 'Đón khách - Sơn Trà', description: 'Đón khách, tham quan bán đảo Sơn Trà và biển Mỹ Khê.' },
+        { tourId: tour.id, dayNumber: 2, title: 'Bà Nà Hills', description: 'Tham quan Bà Nà Hills và Cầu Vàng.' },
+        { tourId: tour.id, dayNumber: 3, title: 'Hội An - Tiễn khách', description: 'Tham quan phố cổ Hội An và kết thúc hành trình.' }
+        ], { transaction });
+        const startDate = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000);
+        const endDate = new Date(startDate.getTime() + 2 * 24 * 60 * 60 * 1000);
+        await TourDeparture.create({
+        tourId: tour.id,
+        startDate: startDate.toISOString().slice(0, 10),
+        endDate: endDate.toISOString().slice(0, 10),
+        capacity: Math.min(vehicle.seatCapacity, 30),
+        adultPrice: 4500000,
+        childPrice: 2500000,
+        hotelId: hotel.id,
+        vehicleId: vehicle.id,
+        guideId: guide.id,
+        status: 'OPEN'
+        }, { transaction });
+      });
+      console.log('   ✅ Đã tạo tour, lịch trình và đợt khởi hành mẫu');
+    }
+
+    // 8. Tạo Voucher mẫu
     const voucherCount = await Voucher.count();
     if (voucherCount === 0) {
       await Voucher.bulkCreate([
