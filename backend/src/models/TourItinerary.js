@@ -26,7 +26,8 @@ const TourItinerary = sequelize.define('TourItinerary', {
     allowNull: false
   }
 }, {
-  tableName: 'tour_itineraries'
+  tableName: 'tour_itineraries',
+  indexes: [{ unique: true, fields: ['tour_id', 'day_number'], name: 'uq_itinerary_tour_day' }]
 });
 
 module.exports = TourItinerary;

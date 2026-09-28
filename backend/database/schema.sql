@@ -159,7 +159,8 @@ CREATE TABLE `tour_itineraries` (
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT `fk_itinerary_tour` FOREIGN KEY (`tour_id`) REFERENCES `tours` (`id`) ON DELETE CASCADE,
-  INDEX `idx_itinerary_tour_day` (`tour_id`, `day_number`)
+  UNIQUE KEY `uq_itinerary_tour_day` (`tour_id`, `day_number`),
+  CONSTRAINT `chk_itinerary_day_positive` CHECK (`day_number` > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------
