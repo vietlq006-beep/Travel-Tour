@@ -6,8 +6,9 @@ const { authenticateToken, authorizeRoles } = require('../middlewares/authMiddle
 const { uploadImage } = require('../middlewares/uploadMiddleware');
 const { validateDestination } = require('../validators/destinationValidator');
 const { validateIdParam, validatePagination } = require('../validators/commonValidator');
+const { validateDestinationQuery } = require('../validators/queryValidator');
 
-router.get('/', validateRequest(validatePagination), asyncHandler(controller.list));
+router.get('/', validateRequest(validatePagination), validateRequest(validateDestinationQuery), asyncHandler(controller.list));
 router.get('/:id', validateRequest(validateIdParam), asyncHandler(controller.getById));
 router.use(authenticateToken, authorizeRoles('ADMIN'));
 router.post('/', uploadImage.single('image'), validateRequest(validateDestination), asyncHandler(controller.create));

@@ -6,9 +6,10 @@ const { authenticateToken, authorizeRoles, optionalAuthenticate } = require('../
 const { uploadImage } = require('../middlewares/uploadMiddleware');
 const { validateTour } = require('../validators/tourValidator');
 const { validateIdParam, validatePagination } = require('../validators/commonValidator');
+const { validateTourQuery } = require('../validators/queryValidator');
 
 const tourImages = uploadImage.fields([{ name: 'thumbnail', maxCount: 1 }, { name: 'images', maxCount: 8 }]);
-router.get('/', optionalAuthenticate, validate(validatePagination), wrap(controller.list));
+router.get('/', optionalAuthenticate, validate(validatePagination), validate(validateTourQuery), wrap(controller.list));
 router.get('/:id', optionalAuthenticate, validate(validateIdParam), wrap(controller.getById));
 router.use(authenticateToken, authorizeRoles('ADMIN'));
 router.post('/', tourImages, validate(validateTour), wrap(controller.create));
