@@ -42,6 +42,7 @@ app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/destinations', require('./routes/destinationRoutes'));
 app.use('/api/hotels', require('./routes/hotelRoutes'));
 app.use('/api/vehicles', require('./routes/vehicleRoutes'));
+app.use('/api/tour-guides', require('./routes/tourGuideRoutes'));
 
 app.use('*', (req, res) => ApiResponse.error(
   res,
