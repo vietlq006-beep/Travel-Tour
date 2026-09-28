@@ -77,8 +77,11 @@ class BookingService {
       const booking = await Booking.findOne({ where, transaction, lock: transaction.LOCK.UPDATE });
       if (!booking) throw new AppError('Không tìm thấy đơn đặt chỗ.', 404);
       if (user.role !== 'ADMIN' && nextStatus !== 'CANCELLED') throw new AppError('Khách hàng chỉ có thể hủy đơn.', 403);
+      if (user.role !== 'ADMIN' && booking.status !== 'PENDING_PAYMENT') throw new AppError('Đơn đã xác nhận cần liên hệ quản trị viên để xử lý hoàn tiền.', 409);
       if (!allowed[booking.status].includes(nextStatus)) throw new AppError(`Không thể chuyển từ ${booking.status} sang ${nextStatus}.`, 409);
       if (nextStatus === 'CANCELLED') {
+        const successfulPayment = await Payment.findOne({ where: { bookingId: booking.id, status: 'SUCCESS' }, transaction, lock: transaction.LOCK.UPDATE });
+        if (successfulPayment) throw new AppError('Cần hoàn tiền giao dịch thành công trước khi hủy đơn.', 409);
         const departure = await TourDeparture.findByPk(booking.departureId, { transaction, lock: transaction.LOCK.UPDATE });
         const seats = Number(booking.numAdults) + Number(booking.numChildren);
         await departure.decrement('bookedSeats', { by: Math.min(seats, departure.bookedSeats), transaction });
@@ -86,6 +89,9 @@ class BookingService {
           const voucher = await Voucher.findByPk(booking.voucherId, { transaction, lock: transaction.LOCK.UPDATE });
           if (voucher && voucher.usedCount > 0) await voucher.decrement('usedCount', { by: 1, transaction });
         }
+        await Payment.update({ status: 'FAILED', responseData: { reason: 'BOOKING_CANCELLED' } }, {
+          where: { bookingId: booking.id, status: 'PENDING' }, transaction
+        });
       }
       await booking.update({ status: nextStatus }, { transaction });
     });
