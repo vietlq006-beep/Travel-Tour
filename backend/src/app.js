@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const errorHandler = require('./middlewares/errorHandler');
 const ApiResponse = require('./utils/apiResponse');
+const AppError = require('./utils/appError');
 
 const app = express();
 const configuredOrigins = [process.env.CLIENT_ADMIN_URL, process.env.CLIENT_CUSTOMER_URL].filter(Boolean);
@@ -18,7 +19,7 @@ app.use(cors({
     if (!origin || process.env.NODE_ENV !== 'production' || configuredOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error('Nguồn gửi yêu cầu không được CORS cho phép.'));
+    return callback(new AppError('Nguồn gửi yêu cầu không được CORS cho phép.', 403));
   },
   credentials: true
 }));

@@ -19,13 +19,17 @@ const normalizeError = (err) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     return [400, 'Nội dung JSON không hợp lệ.', []];
   }
-  return [err.statusCode || 500, err.message || 'Lỗi máy chủ nội bộ', err.errors || []];
+  if (err.isOperational) return [err.statusCode || 500, err.message, err.errors || []];
+  return [500, 'Lỗi máy chủ nội bộ', []];
 };
 
 const errorHandler = (err, req, res, _next) => {
   const [statusCode, message, errors] = normalizeError(err);
   if (process.env.NODE_ENV !== 'test') {
-    console.error('[Global Error]', { requestId: req.requestId, name: err.name, message: err.message });
+    console.error('[Global Error]', {
+      requestId: req.requestId, name: err.name, message: err.message,
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
   }
   res.setHeader('X-Request-Id', req.requestId || 'unknown');
   return ApiResponse.error(res, message, errors, statusCode);
