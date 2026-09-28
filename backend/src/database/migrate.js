@@ -3,7 +3,8 @@ const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../models');
 
 const migrations = [
-  require('./migrations/001-harden-constraints')
+  require('./migrations/001-harden-constraints'),
+  require('./migrations/002-add-query-indexes')
 ];
 
 const run = async () => {

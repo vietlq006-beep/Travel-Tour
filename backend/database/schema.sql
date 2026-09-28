@@ -43,7 +43,8 @@ CREATE TABLE `users` (
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_users_email` (`email`),
-  INDEX `idx_users_role` (`role`)
+  INDEX `idx_users_role` (`role`),
+  INDEX `idx_users_role_active` (`role`, `is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------
@@ -133,7 +134,8 @@ CREATE TABLE `tours` (
   `deleted_at` DATETIME NULL,
   CONSTRAINT `fk_tours_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE RESTRICT,
   INDEX `idx_tours_code` (`code`),
-  INDEX `idx_tours_category` (`category_id`)
+  INDEX `idx_tours_category` (`category_id`),
+  INDEX `idx_tours_active_created` (`is_active`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------
@@ -191,7 +193,8 @@ CREATE TABLE `tour_departures` (
   CONSTRAINT `chk_departure_prices` CHECK (`adult_price` > 0 AND `child_price` >= 0),
   INDEX `idx_departures_tour` (`tour_id`),
   INDEX `idx_departures_start_date` (`start_date`),
-  INDEX `idx_departures_status` (`status`)
+  INDEX `idx_departures_status` (`status`),
+  INDEX `idx_departures_status_date` (`status`, `start_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------
@@ -213,7 +216,8 @@ CREATE TABLE `vouchers` (
   CONSTRAINT `chk_voucher_value` CHECK (`discount_value` > 0 AND (`discount_type` <> 'PERCENT' OR `discount_value` <= 100)),
   CONSTRAINT `chk_voucher_usage` CHECK (`max_usage` > 0 AND `used_count` >= 0 AND `used_count` <= `max_usage`),
   CONSTRAINT `chk_voucher_dates` CHECK (`end_date` > `start_date`),
-  INDEX `idx_vouchers_code` (`code`)
+  INDEX `idx_vouchers_code` (`code`),
+  INDEX `idx_vouchers_active_dates` (`is_active`, `start_date`, `end_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------
@@ -243,7 +247,9 @@ CREATE TABLE `bookings` (
   INDEX `idx_bookings_code` (`booking_code`),
   INDEX `idx_bookings_user` (`user_id`),
   INDEX `idx_bookings_departure` (`departure_id`),
-  INDEX `idx_bookings_status` (`status`)
+  INDEX `idx_bookings_status` (`status`),
+  INDEX `idx_bookings_user_date` (`user_id`, `booking_date`),
+  INDEX `idx_bookings_status_date` (`status`, `booking_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------
@@ -278,7 +284,8 @@ CREATE TABLE `payments` (
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT `fk_payments_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE RESTRICT,
   INDEX `idx_payments_booking` (`booking_id`),
-  UNIQUE KEY `uq_payments_trans_id` (`transaction_id`)
+  UNIQUE KEY `uq_payments_trans_id` (`transaction_id`),
+  INDEX `idx_payments_booking_status` (`booking_id`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------
@@ -298,5 +305,6 @@ CREATE TABLE `reviews` (
   CONSTRAINT `fk_reviews_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `chk_reviews_rating` CHECK (`rating` BETWEEN 1 AND 5),
   INDEX `idx_reviews_tour` (`tour_id`),
-  INDEX `idx_reviews_user` (`user_id`)
+  INDEX `idx_reviews_user` (`user_id`),
+  INDEX `idx_reviews_tour_created` (`tour_id`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
