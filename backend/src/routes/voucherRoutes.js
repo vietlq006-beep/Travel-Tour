@@ -1,0 +1,21 @@
+const router = require('express').Router();
+const c = require('../controllers/voucherController');
+const wrap = require('../utils/asyncHandler');
+const validate = require('../middlewares/validateRequest');
+const { authenticateToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { validateVoucher } = require('../validators/voucherValidator');
+const { validateIdParam, validatePagination } = require('../validators/commonValidator');
+router.use(authenticateToken);
+router.post('/validate', validate((req) => {
+  const errors = [];
+  if (!req.body.code) errors.push({ field: 'code', message: 'Mã voucher là bắt buộc' });
+  if (!Number.isFinite(Number(req.body.totalAmount)) || Number(req.body.totalAmount) < 0) errors.push({ field: 'totalAmount', message: 'Tổng tiền không hợp lệ' });
+  return errors;
+}), wrap(c.validateCode));
+router.use(authorizeRoles('ADMIN'));
+router.get('/', validate(validatePagination), wrap(c.list));
+router.get('/:id', validate(validateIdParam), wrap(c.get));
+router.post('/', validate(validateVoucher), wrap(c.create));
+router.put('/:id', validate(validateIdParam), validate(validateVoucher), wrap(c.update));
+router.delete('/:id', validate(validateIdParam), wrap(c.remove));
+module.exports = router;
