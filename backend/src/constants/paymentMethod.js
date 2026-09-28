@@ -7,7 +7,8 @@ const PAYMENT_METHOD = Object.freeze({
 const PAYMENT_STATUS = Object.freeze({
   PENDING: 'PENDING',
   SUCCESS: 'SUCCESS',
-  FAILED: 'FAILED'
+  FAILED: 'FAILED',
+  REFUNDED: 'REFUNDED'
 });
 
 module.exports = {

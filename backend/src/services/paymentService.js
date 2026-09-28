@@ -24,15 +24,18 @@ class PaymentService {
     return sequelize.transaction(async (transaction) => {
       const payment = await Payment.findByPk(id, { transaction, lock: transaction.LOCK.UPDATE });
       if (!payment) throw new AppError('Không tìm thấy giao dịch.', 404);
-      if (payment.status !== PAYMENT_STATUS.PENDING) {
-        if (payment.status === status) return payment;
-        throw new AppError('Giao dịch đã được xử lý trước đó.', 409);
-      }
+      if (payment.status === status) return payment;
+      const transitions = {
+        [PAYMENT_STATUS.PENDING]: [PAYMENT_STATUS.SUCCESS, PAYMENT_STATUS.FAILED],
+        [PAYMENT_STATUS.SUCCESS]: [PAYMENT_STATUS.REFUNDED],
+        [PAYMENT_STATUS.FAILED]: [], [PAYMENT_STATUS.REFUNDED]: []
+      };
+      if (!transitions[payment.status].includes(status)) throw new AppError(`Không thể chuyển giao dịch từ ${payment.status} sang ${status}.`, 409);
       const booking = await Booking.findByPk(payment.bookingId, { transaction, lock: transaction.LOCK.UPDATE });
       await payment.update({
         status, transactionId: metadata.transactionId || payment.transactionId,
         responseData: metadata.responseData || payment.responseData,
-        paymentTime: status === PAYMENT_STATUS.SUCCESS ? new Date() : null
+        paymentTime: status === PAYMENT_STATUS.SUCCESS ? new Date() : payment.paymentTime
       }, { transaction });
       if (status === PAYMENT_STATUS.SUCCESS && booking.status === 'PENDING_PAYMENT') {
         await booking.update({ status: 'CONFIRMED' }, { transaction });
