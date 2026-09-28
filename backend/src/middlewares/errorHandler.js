@@ -1,55 +1,33 @@
+const multer = require('multer');
 const ApiResponse = require('../utils/apiResponse');
 
-/**
- * Global Error Handler Middleware
- * Bắt mọi ngoại lệ chưa được xử lý trong ứng dụng
- */
-const errorHandler = (err, req, res, next) => {
-  let statusCode = err.statusCode || 500;
-  let message = err.message || 'Lỗi máy chủ nội bộ (Internal Server Error)';
-  let errors = err.errors || [];
-
-  // Lỗi xác thực của Sequelize (Validation error)
+const normalizeError = (err) => {
   if (err.name === 'SequelizeValidationError') {
-    statusCode = 422;
-    message = 'Dữ liệu không hợp lệ';
-    errors = err.errors.map(e => ({
-      field: e.path,
-      message: e.message
-    }));
+    return [422, 'Dữ liệu không hợp lệ', err.errors.map((item) => ({ field: item.path, message: item.message }))];
   }
-
-  // Lỗi vi phạm ràng buộc duy nhất (Unique constraint)
   if (err.name === 'SequelizeUniqueConstraintError') {
-    statusCode = 409;
-    message = 'Dữ liệu đã tồn tại trong hệ thống';
-    errors = err.errors.map(e => ({
-      field: e.path,
-      message: `${e.path} đã được sử dụng`
-    }));
+    return [409, 'Dữ liệu đã tồn tại trong hệ thống', err.errors.map((item) => ({ field: item.path, message: `${item.path} đã được sử dụng` }))];
   }
-
-  // Lỗi JWT token sai
-  if (err.name === 'JsonWebTokenError') {
-    statusCode = 401;
-    message = 'Token xác thực không hợp lệ. Vui lòng đăng nhập lại.';
+  if (err.name === 'SequelizeForeignKeyConstraintError') {
+    return [409, 'Không thể thực hiện vì dữ liệu đang được tham chiếu', []];
   }
-
-  // Lỗi JWT token hết hạn
-  if (err.name === 'TokenExpiredError') {
-    statusCode = 401;
-    message = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+  if (err.name === 'JsonWebTokenError') return [401, 'Token xác thực không hợp lệ.', []];
+  if (err.name === 'TokenExpiredError') return [401, 'Phiên đăng nhập đã hết hạn.', []];
+  if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+    return [413, 'Ảnh tải lên vượt quá giới hạn 5 MB.', []];
   }
-
-  // Log chi tiết lỗi nếu ở môi trường development
-  if (process.env.NODE_ENV === 'development') {
-    console.error('💥 [Global Error]', {
-      name: err.name,
-      message: err.message,
-      stack: err.stack
-    });
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return [400, 'Nội dung JSON không hợp lệ.', []];
   }
+  return [err.statusCode || 500, err.message || 'Lỗi máy chủ nội bộ', err.errors || []];
+};
 
+const errorHandler = (err, req, res, _next) => {
+  const [statusCode, message, errors] = normalizeError(err);
+  if (process.env.NODE_ENV !== 'test') {
+    console.error('[Global Error]', { requestId: req.requestId, name: err.name, message: err.message });
+  }
+  res.setHeader('X-Request-Id', req.requestId || 'unknown');
   return ApiResponse.error(res, message, errors, statusCode);
 };
 
