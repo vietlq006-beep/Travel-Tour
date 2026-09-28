@@ -218,3 +218,163 @@ Trạng thái: `OPEN`, `CLOSED`, `COMPLETED`, `CANCELLED`. API chặn trùng l�
 ### `DELETE /departures/:id` (ADMIN)
 
 Chỉ xóa khi chưa có đơn đặt chỗ.
+
+## Voucher
+
+Base `/vouchers`, mọi endpoint yêu cầu đăng nhập. CRUD yêu cầu `ADMIN`.
+
+| Method | Endpoint | Quyền | Mô tả |
+|---|---|---|---|
+| POST | `/vouchers/validate` | Đã đăng nhập | Tính mức giảm dự kiến |
+| GET | `/vouchers` | ADMIN | Danh sách |
+| GET | `/vouchers/:id` | ADMIN | Chi tiết |
+| POST | `/vouchers` | ADMIN | Tạo |
+| PUT | `/vouchers/:id` | ADMIN | Cập nhật |
+| DELETE | `/vouchers/:id` | ADMIN | Xóa hoặc ngừng hoạt động nếu đã dùng |
+
+```json
+{
+  "code": "SUMMER10",
+  "discountType": "PERCENT",
+  "discountValue": 10,
+  "minBookingAmount": 1000000,
+  "maxUsage": 100,
+  "startDate": "2026-06-01T00:00:00.000Z",
+  "endDate": "2026-09-01T00:00:00.000Z",
+  "isActive": true
+}
+```
+
+`discountType` nhận `PERCENT` hoặc `FIXED`. `PERCENT` không vượt 100. API validate nhận `{ "code": "SUMMER10", "totalAmount": 5000000 }`.
+
+## Đặt chỗ
+
+Base `/bookings`, tất cả endpoint yêu cầu đăng nhập.
+
+### `POST /bookings` (CUSTOMER hoặc ADMIN)
+
+```json
+{
+  "departureId": 10,
+  "voucherCode": "SUMMER10",
+  "numAdults": 1,
+  "numChildren": 1,
+  "notes": "Ăn chay",
+  "participants": [
+    {
+      "fullName": "Nguyễn Văn An",
+      "gender": "MALE",
+      "dateOfBirth": "1990-01-01",
+      "passengerType": "ADULT"
+    },
+    {
+      "fullName": "Nguyễn Minh Anh",
+      "gender": "FEMALE",
+      "dateOfBirth": "2018-01-01",
+      "passengerType": "CHILD"
+    }
+  ]
+}
+```
+
+Không gửi giá từ client. Server khóa bản ghi đợt khởi hành, kiểm tra ghế, lấy giá hiện tại, tính voucher, tạo hành khách và tăng số ghế trong cùng một transaction.
+
+### `GET /bookings`
+
+Khách hàng chỉ thấy đơn của mình; admin thấy tất cả. Hỗ trợ `status`, `keyword` (mã đơn), `page`, `limit`.
+
+### `GET /bookings/:id`
+
+Trả chi tiết đợt/tour, hành khách, voucher, giao dịch và đánh giá. Khách không thể đọc đơn của người khác.
+
+### `POST /bookings/:id/cancel`
+
+Khách chỉ tự hủy đơn `PENDING_PAYMENT`. Khi hủy, API trả lại ghế và lượt voucher, đồng thời đánh dấu giao dịch đang chờ là thất bại.
+
+### `PATCH /bookings/:id/status` (ADMIN)
+
+```json
+{ "status": "CONFIRMED" }
+```
+
+Trạng thái: `PENDING_PAYMENT`, `CONFIRMED`, `CANCELLED`, `COMPLETED`. Không được hủy đơn có giao dịch `SUCCESS`; cần chuyển giao dịch sang `REFUNDED` trước.
+
+## Thanh toán
+
+### `POST /payments`
+
+Yêu cầu đăng nhập. Số tiền luôn lấy từ `booking.finalAmount`.
+
+```json
+{ "bookingId": 25, "paymentMethod": "BANK_TRANSFER" }
+```
+
+Phương thức: `CASH`, `BANK_TRANSFER`, `VNPAY`. Khách không được tự tạo giao dịch tiền mặt. Với VNPAY, response có thêm `paymentUrl` dùng để chuyển trình duyệt tới cổng thanh toán.
+
+### `GET /payments/booking/:bookingId`
+
+Lịch sử giao dịch của đơn. Khách chỉ xem đơn của mình.
+
+### `PATCH /payments/:id/status` (ADMIN)
+
+```json
+{
+  "status": "SUCCESS",
+  "transactionId": "BANK-REF-001",
+  "responseData": { "note": "Đã đối soát" }
+}
+```
+
+Trạng thái và luồng hợp lệ:
+
+- `PENDING` → `SUCCESS` hoặc `FAILED`.
+- `SUCCESS` → `REFUNDED` sau khi quản trị viên/cổng thanh toán đã thực hiện hoàn tiền.
+- `FAILED` và `REFUNDED` là trạng thái cuối.
+- Khi giao dịch thành công, đơn `PENDING_PAYMENT` tự chuyển `CONFIRMED`.
+
+### Callback VNPAY
+
+- `GET /payments/vnpay/ipn`: VNPAY gọi máy chủ, trả `{ "RspCode": "00", "Message": "..." }`.
+- `GET /payments/vnpay/return`: URL trình duyệt khách quay về, trả response chuẩn của API.
+
+Server kiểm tra HMAC-SHA512, mã tham chiếu, số tiền, mã phản hồi và trạng thái cũ để chống giả mạo/lặp callback. Không đặt hai endpoint này sau middleware JWT.
+
+## Đánh giá
+
+| Method | Endpoint | Quyền | Mô tả |
+|---|---|---|---|
+| GET | `/reviews/tour/:tourId?page=1&limit=10` | Public | Đánh giá của tour |
+| POST | `/reviews` | Đã đăng nhập | Tạo từ đơn đã hoàn tất |
+| PUT | `/reviews/:id` | Chủ sở hữu/ADMIN | Cập nhật |
+| DELETE | `/reviews/:id` | Chủ sở hữu/ADMIN | Xóa |
+
+Tạo đánh giá: `{ "bookingId": 25, "rating": 5, "comment": "Chuyến đi rất tốt" }`. Mỗi booking chỉ có một đánh giá và `rating` từ 1 đến 5.
+
+## Quản trị người dùng
+
+Base `/users`, chỉ `ADMIN`.
+
+- `GET /users?keyword=an&role=CUSTOMER&isActive=true&page=1&limit=10`
+- `GET /users/:id` trả hồ sơ cùng lịch sử đơn (không bao giờ trả hash mật khẩu).
+- `PATCH /users/:id` nhận `{ "role": "ADMIN", "isActive": true }`.
+
+Admin không thể tự khóa tài khoản đang dùng.
+
+## Dashboard và báo cáo
+
+Chỉ `ADMIN`.
+
+- `GET /dashboard/summary`: số khách, tour đang hoạt động, đợt đang mở, doanh thu, số đơn theo trạng thái.
+- `GET /dashboard/analytics?fromDate=2026-01-01&toDate=2026-12-31`: doanh thu theo tháng và 10 tour doanh thu cao.
+- `GET /reports/bookings.xlsx?fromDate=2026-01-01&toDate=2026-12-31&status=CONFIRMED`: tải báo cáo Excel.
+
+File Excel đã vô hiệu các chuỗi bắt đầu bằng `=`, `+`, `-`, `@` để phòng formula injection.
+
+## Ghi chú tích hợp frontend
+
+- Lưu token ở cơ chế phù hợp với kiến trúc frontend; không ghi token vào log.
+- Đọc `X-Request-Id` trong response để đối chiếu log khi báo lỗi.
+- Với lỗi `422`, hiển thị mảng `errors` theo từng `field`.
+- Với `401`, xóa phiên đăng nhập và chuyển tới trang login.
+- Với `409`, hiển thị đúng `message`; đây thường là xung đột trạng thái chứ không phải lỗi nhập liệu.
+- Giá tiền trả từ Sequelize có thể là chuỗi thập phân; frontend nên chuyển sang số trước khi định dạng.
