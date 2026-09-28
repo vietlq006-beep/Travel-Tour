@@ -48,6 +48,54 @@ class TourService {
     });
     return { ...tour.toJSON(), rating: { average: Number(rating.average || 0), count: Number(rating.count || 0) } };
   }
+
+  async validateRelations(categoryId, destinationIds = [], transaction) {
+    if (categoryId && !await Category.findByPk(categoryId, { transaction })) {
+      throw new AppError('Danh mục tour không tồn tại.', 422);
+    }
+    if (destinationIds.length) {
+      const count = await Destination.count({ where: { id: destinationIds }, transaction });
+      if (count !== destinationIds.length) throw new AppError('Một hoặc nhiều điểm đến không tồn tại.', 422);
+    }
+  }
+
+  async create(data) {
+    const createdId = await sequelize.transaction(async (transaction) => {
+      const { destinationIds = [], ...tourData } = data;
+      await this.validateRelations(tourData.categoryId, destinationIds, transaction);
+      tourData.code = tourData.code.trim().toUpperCase();
+      tourData.name = tourData.name.trim();
+      const tour = await Tour.create(tourData, { transaction });
+      if (destinationIds.length) await tour.setDestinations(destinationIds, { transaction });
+      return tour.id;
+    });
+    return this.getById(createdId, true);
+  }
+
+  async update(id, data) {
+    await sequelize.transaction(async (transaction) => {
+      const tour = await Tour.findByPk(id, { transaction });
+      if (!tour) throw new AppError('Không tìm thấy tour.', 404);
+      const { destinationIds, ...tourData } = data;
+      await this.validateRelations(tourData.categoryId, destinationIds || [], transaction);
+      if (tourData.code) tourData.code = tourData.code.trim().toUpperCase();
+      if (tourData.name) tourData.name = tourData.name.trim();
+      await tour.update(tourData, { transaction });
+      if (destinationIds !== undefined) await tour.setDestinations(destinationIds, { transaction });
+    });
+    return this.getById(id, true);
+  }
+
+  async remove(id) {
+    const tour = await Tour.findByPk(id);
+    if (!tour) throw new AppError('Không tìm thấy tour.', 404);
+    if (await TourDeparture.count({ where: { tourId: id } })) {
+      await tour.update({ isActive: false });
+      return { deactivated: true };
+    }
+    await tour.destroy();
+    return { deactivated: false };
+  }
 }
 
 module.exports = new TourService();
