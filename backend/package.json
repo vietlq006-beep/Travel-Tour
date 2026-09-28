@@ -1,7 +1,7 @@
 {
   "name": "leviet-travel-backend",
   "version": "1.0.0",
-  "description": "Backend REST API cho Hệ thống Quản lý Du lịch & Tour (LeViet Travel)",
+  "description": "Backend REST API cho hệ thống quản lý du lịch và tour LeViet Travel",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -39,5 +39,8 @@
   "devDependencies": {
     "nodemon": "^3.1.9",
     "supertest": "^7.3.0"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   }
 }
