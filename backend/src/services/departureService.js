@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { TourDeparture, Tour, Hotel, Vehicle, TourGuide, Booking } = require('../models');
+const { sequelize, TourDeparture, Tour, Hotel, Vehicle, TourGuide, Booking } = require('../models');
 const AppError = require('../utils/appError');
 const { getPagination, toPaginatedResult } = require('../utils/pagination');
 
@@ -53,9 +53,27 @@ class DepartureService {
     if (data.capacity !== undefined && Number(data.capacity) < item.bookedSeats) throw new AppError('Sức chứa không được nhỏ hơn số chỗ đã đặt.', 409);
     const merged = { ...item.get(), ...data };
     if (new Date(merged.endDate) < new Date(merged.startDate)) throw new AppError('Ngày kết thúc phải từ ngày bắt đầu trở đi.', 422);
+    if (data.status && data.status !== item.status) {
+      const transitions = {
+        OPEN: ['CLOSED', 'CANCELLED'], CLOSED: ['OPEN', 'COMPLETED', 'CANCELLED'],
+        COMPLETED: [], CANCELLED: []
+      };
+      if (!transitions[item.status].includes(data.status)) throw new AppError(`Không thể chuyển đợt khởi hành từ ${item.status} sang ${data.status}.`, 409);
+      if (data.status === 'CANCELLED') {
+        const activeBookings = await Booking.count({ where: { departureId: id, status: ['PENDING_PAYMENT', 'CONFIRMED'] } });
+        if (activeBookings) throw new AppError('Cần xử lý hủy/hoàn tiền toàn bộ đơn trước khi hủy đợt khởi hành.', 409);
+      }
+      if (data.status === 'COMPLETED' && new Date(merged.endDate) > new Date()) throw new AppError('Chưa thể hoàn tất đợt khởi hành trước ngày kết thúc.', 409);
+    }
     await this.validateReferences(data);
     await this.ensureResourceAvailable(merged, item.id);
-    return item.update(data);
+    await sequelize.transaction(async (transaction) => {
+      await item.update(data, { transaction });
+      if (data.status === 'COMPLETED') {
+        await Booking.update({ status: 'COMPLETED' }, { where: { departureId: id, status: 'CONFIRMED' }, transaction });
+      }
+    });
+    return this.get(id, true);
   }
   async remove(id) {
     const item = await TourDeparture.findByPk(id);
