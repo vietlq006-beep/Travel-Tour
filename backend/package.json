@@ -8,7 +8,7 @@
     "dev": "nodemon server.js",
     "migrate": "node src/database/migrate.js",
     "seed": "node src/database/seeders/seed.js",
-    "test": "node --test --test-concurrency=1",
+    "test": "node --test --test-concurrency=1 test/unit/*.test.js test/integration/*.test.js",
     "test:unit": "node --test --test-concurrency=1 test/unit/*.test.js",
     "test:integration": "node --test --test-concurrency=1 test/integration/*.test.js"
   },
