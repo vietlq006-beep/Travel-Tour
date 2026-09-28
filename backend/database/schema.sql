@@ -186,6 +186,9 @@ CREATE TABLE `tour_departures` (
   CONSTRAINT `fk_departures_hotel` FOREIGN KEY (`hotel_id`) REFERENCES `hotels` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_departures_vehicle` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_departures_guide` FOREIGN KEY (`guide_id`) REFERENCES `tour_guides` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `chk_departure_dates` CHECK (`end_date` >= `start_date`),
+  CONSTRAINT `chk_departure_capacity` CHECK (`capacity` > 0 AND `booked_seats` >= 0 AND `booked_seats` <= `capacity`),
+  CONSTRAINT `chk_departure_prices` CHECK (`adult_price` > 0 AND `child_price` >= 0),
   INDEX `idx_departures_tour` (`tour_id`),
   INDEX `idx_departures_start_date` (`start_date`),
   INDEX `idx_departures_status` (`status`)

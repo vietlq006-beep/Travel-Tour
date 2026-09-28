@@ -25,7 +25,8 @@ const TourDeparture = sequelize.define('TourDeparture', {
   },
   capacity: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: false,
+    validate: { min: 1 }
   },
   bookedSeats: {
     type: DataTypes.INTEGER,
@@ -36,12 +37,14 @@ const TourDeparture = sequelize.define('TourDeparture', {
   adultPrice: {
     type: DataTypes.DECIMAL(12, 2),
     allowNull: false,
-    field: 'adult_price'
+    field: 'adult_price',
+    validate: { min: 0.01 }
   },
   childPrice: {
     type: DataTypes.DECIMAL(12, 2),
     allowNull: false,
-    field: 'child_price'
+    field: 'child_price',
+    validate: { min: 0 }
   },
   hotelId: {
     type: DataTypes.INTEGER,
