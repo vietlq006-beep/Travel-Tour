@@ -20,6 +20,19 @@ const createBookingCode = () => {
 };
 
 class BookingService {
+  async list(query, user) {
+    const { page, limit, offset } = getPagination(query);
+    const where = {};
+    if (user.role !== 'ADMIN') where.userId = user.id;
+    if (query.status) where.status = query.status;
+    if (query.keyword) where.bookingCode = { [Op.like]: `%${query.keyword.trim()}%` };
+    const include = [
+      { model: TourDeparture, as: 'departure', include: [{ model: Tour, as: 'tour', attributes: ['id', 'code', 'name', 'thumbnail'] }] },
+      ...(user.role === 'ADMIN' ? [{ model: User, as: 'user', attributes: ['id', 'fullName', 'email', 'phoneNumber'] }] : [])
+    ];
+    return toPaginatedResult(await Booking.findAndCountAll({ where, include, distinct: true, limit, offset, order: [['bookingDate', 'DESC']] }), page, limit);
+  }
+
   async getById(id, user) {
     const where = { id };
     if (user.role !== 'ADMIN') where.userId = user.id;
@@ -52,6 +65,34 @@ class BookingService {
     });
     return this.getById(bookingId, { id: userId, role: 'CUSTOMER' });
   }
+
+  async changeStatus(id, nextStatus, user) {
+    const allowed = {
+      PENDING_PAYMENT: ['CONFIRMED', 'CANCELLED'],
+      CONFIRMED: ['COMPLETED', 'CANCELLED'],
+      CANCELLED: [], COMPLETED: []
+    };
+    await sequelize.transaction(async (transaction) => {
+      const where = { id, ...(user.role !== 'ADMIN' && { userId: user.id }) };
+      const booking = await Booking.findOne({ where, transaction, lock: transaction.LOCK.UPDATE });
+      if (!booking) throw new AppError('Không tìm thấy đơn đặt chỗ.', 404);
+      if (user.role !== 'ADMIN' && nextStatus !== 'CANCELLED') throw new AppError('Khách hàng chỉ có thể hủy đơn.', 403);
+      if (!allowed[booking.status].includes(nextStatus)) throw new AppError(`Không thể chuyển từ ${booking.status} sang ${nextStatus}.`, 409);
+      if (nextStatus === 'CANCELLED') {
+        const departure = await TourDeparture.findByPk(booking.departureId, { transaction, lock: transaction.LOCK.UPDATE });
+        const seats = Number(booking.numAdults) + Number(booking.numChildren);
+        await departure.decrement('bookedSeats', { by: Math.min(seats, departure.bookedSeats), transaction });
+        if (booking.voucherId) {
+          const voucher = await Voucher.findByPk(booking.voucherId, { transaction, lock: transaction.LOCK.UPDATE });
+          if (voucher && voucher.usedCount > 0) await voucher.decrement('usedCount', { by: 1, transaction });
+        }
+      }
+      await booking.update({ status: nextStatus }, { transaction });
+    });
+    return this.getById(id, user);
+  }
+
+  cancel(id, user) { return this.changeStatus(id, 'CANCELLED', user); }
 }
 
 module.exports = new BookingService();
