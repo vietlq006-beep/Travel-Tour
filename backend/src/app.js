@@ -40,6 +40,7 @@ app.get('/api/health', (_req, res) => ApiResponse.success(
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/destinations', require('./routes/destinationRoutes'));
+app.use('/api/hotels', require('./routes/hotelRoutes'));
 
 app.use('*', (req, res) => ApiResponse.error(
   res,
