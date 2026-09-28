@@ -29,6 +29,7 @@ const Payment = sequelize.define('Payment', {
   transactionId: {
     type: DataTypes.STRING(100),
     allowNull: true,
+    unique: true,
     field: 'transaction_id'
   },
   status: {

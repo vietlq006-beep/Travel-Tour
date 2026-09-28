@@ -238,6 +238,8 @@ CREATE TABLE `bookings` (
   CONSTRAINT `fk_bookings_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_bookings_departure` FOREIGN KEY (`departure_id`) REFERENCES `tour_departures` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_bookings_voucher` FOREIGN KEY (`voucher_id`) REFERENCES `vouchers` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `chk_booking_passengers` CHECK (`num_adults` > 0 AND `num_children` >= 0),
+  CONSTRAINT `chk_booking_amounts` CHECK (`total_amount` >= 0 AND `discount_amount` >= 0 AND `final_amount` >= 0 AND `final_amount` = `total_amount` - `discount_amount`),
   INDEX `idx_bookings_code` (`booking_code`),
   INDEX `idx_bookings_user` (`user_id`),
   INDEX `idx_bookings_departure` (`departure_id`),
@@ -276,7 +278,7 @@ CREATE TABLE `payments` (
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT `fk_payments_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE RESTRICT,
   INDEX `idx_payments_booking` (`booking_id`),
-  INDEX `idx_payments_trans_id` (`transaction_id`)
+  UNIQUE KEY `uq_payments_trans_id` (`transaction_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------
@@ -294,6 +296,7 @@ CREATE TABLE `reviews` (
   CONSTRAINT `fk_reviews_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_reviews_tour` FOREIGN KEY (`tour_id`) REFERENCES `tours` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_reviews_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `chk_reviews_rating` CHECK (`rating` BETWEEN 1 AND 5),
   INDEX `idx_reviews_tour` (`tour_id`),
   INDEX `idx_reviews_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

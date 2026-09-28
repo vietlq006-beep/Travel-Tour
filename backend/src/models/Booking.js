@@ -33,13 +33,15 @@ const Booking = sequelize.define('Booking', {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 1,
-    field: 'num_adults'
+    field: 'num_adults',
+    validate: { min: 1 }
   },
   numChildren: {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 0,
-    field: 'num_children'
+    field: 'num_children',
+    validate: { min: 0 }
   },
   totalAmount: {
     type: DataTypes.DECIMAL(12, 2),
