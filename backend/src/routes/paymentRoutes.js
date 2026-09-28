@@ -5,8 +5,9 @@ const validate = require('../middlewares/validateRequest');
 const { authenticateToken, authorizeRoles } = require('../middlewares/authMiddleware');
 const { validateCreatePayment, validatePaymentStatus } = require('../validators/paymentValidator');
 const { validateIdParam } = require('../validators/commonValidator');
-router.get('/vnpay/ipn', wrap(c.vnpayIpn));
-router.get('/vnpay/return', wrap(c.vnpayReturn));
+const { paymentCallbackLimiter } = require('../middlewares/rateLimiters');
+router.get('/vnpay/ipn', paymentCallbackLimiter, wrap(c.vnpayIpn));
+router.get('/vnpay/return', paymentCallbackLimiter, wrap(c.vnpayReturn));
 router.use(authenticateToken);
 router.post('/', validate(validateCreatePayment), wrap(c.create));
 router.get('/booking/:bookingId', validate((req) => Number.isInteger(Number(req.params.bookingId)) && Number(req.params.bookingId) > 0

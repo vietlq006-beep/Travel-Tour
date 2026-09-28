@@ -4,10 +4,11 @@ const authController = require('../controllers/authController');
 const { authenticateToken } = require('../middlewares/authMiddleware');
 const validateRequest = require('../middlewares/validateRequest');
 const { validateRegister, validateLogin } = require('../validators/authValidator');
+const { authLimiter } = require('../middlewares/rateLimiters');
 
 // Public routes
-router.post('/register', validateRequest(validateRegister), (req, res, next) => authController.register(req, res, next));
-router.post('/login', validateRequest(validateLogin), (req, res, next) => authController.login(req, res, next));
+router.post('/register', authLimiter, validateRequest(validateRegister), (req, res, next) => authController.register(req, res, next));
+router.post('/login', authLimiter, validateRequest(validateLogin), (req, res, next) => authController.login(req, res, next));
 
 // Protected routes (Yêu cầu đăng nhập - JWT)
 router.get('/me', authenticateToken, (req, res, next) => authController.getMe(req, res, next));
