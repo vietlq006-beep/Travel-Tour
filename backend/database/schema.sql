@@ -210,6 +210,9 @@ CREATE TABLE `vouchers` (
   `is_active` BOOLEAN NOT NULL DEFAULT TRUE,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `chk_voucher_value` CHECK (`discount_value` > 0 AND (`discount_type` <> 'PERCENT' OR `discount_value` <= 100)),
+  CONSTRAINT `chk_voucher_usage` CHECK (`max_usage` > 0 AND `used_count` >= 0 AND `used_count` <= `max_usage`),
+  CONSTRAINT `chk_voucher_dates` CHECK (`end_date` > `start_date`),
   INDEX `idx_vouchers_code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

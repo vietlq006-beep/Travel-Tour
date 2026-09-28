@@ -20,7 +20,8 @@ const Voucher = sequelize.define('Voucher', {
   discountValue: {
     type: DataTypes.DECIMAL(12, 2),
     allowNull: false,
-    field: 'discount_value'
+    field: 'discount_value',
+    validate: { min: 0.01 }
   },
   minBookingAmount: {
     type: DataTypes.DECIMAL(12, 2),
@@ -32,7 +33,8 @@ const Voucher = sequelize.define('Voucher', {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 100,
-    field: 'max_usage'
+    field: 'max_usage',
+    validate: { min: 1 }
   },
   usedCount: {
     type: DataTypes.INTEGER,
