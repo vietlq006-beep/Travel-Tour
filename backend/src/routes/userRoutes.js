@@ -1,0 +1,12 @@
+const router = require('express').Router();
+const c = require('../controllers/userController');
+const wrap = require('../utils/asyncHandler');
+const validate = require('../middlewares/validateRequest');
+const { authenticateToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { validateAdminUpdateUser } = require('../validators/userValidator');
+const { validateIdParam, validatePagination } = require('../validators/commonValidator');
+router.use(authenticateToken, authorizeRoles('ADMIN'));
+router.get('/', validate(validatePagination), wrap(c.list));
+router.get('/:id', validate(validateIdParam), wrap(c.get));
+router.patch('/:id', validate(validateIdParam), validate(validateAdminUpdateUser), wrap(c.update));
+module.exports = router;
