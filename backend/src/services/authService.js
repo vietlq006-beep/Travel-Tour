@@ -25,7 +25,8 @@ class AuthService {
    * Đăng ký tài khoản khách hàng mới
    */
   async register(userData) {
-    const { fullName, email, password, phoneNumber } = userData;
+    const { fullName, password, phoneNumber } = userData;
+    const email = userData.email.trim().toLowerCase();
 
     // Kiểm tra trùng email
     const existingUser = await User.findOne({ where: { email } });
@@ -56,7 +57,8 @@ class AuthService {
    * Đăng nhập tài khoản
    */
   async login(email, password) {
-    const user = await User.findOne({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ where: { email: normalizedEmail } });
 
     // Không tìm thấy email hoặc password sai -> trả cùng 1 thông báo chung để chống Enumeration Attack
     if (!user || !(await user.comparePassword(password))) {
@@ -97,8 +99,8 @@ class AuthService {
 
     const { fullName, phoneNumber, oldPassword, newPassword } = updateData;
 
-    if (fullName) user.fullName = fullName;
-    if (phoneNumber) user.phoneNumber = phoneNumber;
+    if (fullName !== undefined) user.fullName = fullName.trim();
+    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber || null;
 
     // Nếu có yêu cầu đổi mật khẩu
     if (newPassword) {
@@ -109,8 +111,8 @@ class AuthService {
       if (!isMatch) {
         throw new AppError('Mật khẩu cũ không chính xác.', 400);
       }
-      if (newPassword.length < 6) {
-        throw new AppError('Mật khẩu mới phải có tối thiểu 6 ký tự.', 400);
+      if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,72}$/.test(newPassword)) {
+        throw new AppError('Mật khẩu mới chưa đạt yêu cầu bảo mật.', 422);
       }
       user.password = newPassword; // Hook beforeUpdate sẽ tự băm bcrypt
     }
