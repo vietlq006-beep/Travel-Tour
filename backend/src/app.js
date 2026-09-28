@@ -1,60 +1,51 @@
+const crypto = require('crypto');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const path = require('path');
 const errorHandler = require('./middlewares/errorHandler');
 const ApiResponse = require('./utils/apiResponse');
 
 const app = express();
+const configuredOrigins = [process.env.CLIENT_ADMIN_URL, process.env.CLIENT_CUSTOMER_URL].filter(Boolean);
 
-// ==========================================
-// 1. SECURITY & LOGGING MIDDLEWARES
-// ==========================================
-app.use(helmet({
-  crossOriginResourcePolicy: false // Cho phép load ảnh tĩnh từ domain khác
-}));
-
+app.disable('x-powered-by');
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors({
-  origin: '*', // Trong môi trường dev cho phép mọi origin, production sẽ siết theo .env
+  origin(origin, callback) {
+    if (!origin || process.env.NODE_ENV !== 'production' || configuredOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Nguồn gửi yêu cầu không được CORS cho phép.'));
+  },
   credentials: true
 }));
-
-app.use(morgan('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// ==========================================
-// 2. STATIC FILES (UPLOAD IMAGES)
-// ==========================================
+app.use(morgan(process.env.NODE_ENV === 'test' ? 'tiny' : 'dev'));
+app.use((req, res, next) => {
+  req.requestId = req.headers['x-request-id'] || crypto.randomUUID();
+  res.setHeader('X-Request-Id', req.requestId);
+  next();
+});
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// ==========================================
-// 3. HEALTH CHECK & WELCOME ROUTE
-// ==========================================
-app.get('/api/health', (req, res) => {
-  return ApiResponse.success(res, 'Hệ thống LeViet Travel API hoạt động bình thường', {
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
+app.get('/api/health', (_req, res) => ApiResponse.success(
+  res,
+  'Hệ thống LeViet Travel API hoạt động bình thường',
+  { timestamp: new Date().toISOString(), uptime: process.uptime() }
+));
 
-// ==========================================
-// 4. API ROUTES (SẼ MOUNT TỪNG MODULE)
-// ==========================================
-const authRoutes = require('./routes/authRoutes');
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', require('./routes/authRoutes'));
 
-// ==========================================
-// 5. 404 NOT FOUND HANDLER
-// ==========================================
-app.use('*', (req, res) => {
-  return ApiResponse.error(res, `Không tìm thấy endpoint: ${req.method} ${req.originalUrl}`, [], 404);
-});
+app.use('*', (req, res) => ApiResponse.error(
+  res,
+  `Không tìm thấy endpoint: ${req.method} ${req.originalUrl}`,
+  [],
+  404
+));
 
-// ==========================================
-// 6. GLOBAL ERROR HANDLER
-// ==========================================
 app.use(errorHandler);
 
 module.exports = app;
