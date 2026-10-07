@@ -131,6 +131,14 @@
   width: 100%;
 }
 
+.route-loader {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  color: #475467;
+  font-weight: 600;
+}
+
 .ant-card {
   border-radius: 8px;
 }
