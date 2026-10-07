@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
-import type { AdminSession } from '../../types'
+import type { AdminSession } from '../../types/du-lieu'
 
 interface ProtectedRouteProps {
   session: AdminSession | null

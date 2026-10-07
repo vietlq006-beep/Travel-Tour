@@ -3,13 +3,13 @@ import { App as AntApp, Button, Card, Col, DatePicker, Drawer, Form, InputNumber
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState } from 'react'
-import { api } from '../api/client'
-import { PageTitle } from '../components/common/PageTitle'
-import { StatusTag } from '../components/common/StatusTag'
-import { usePagedResource } from '../hooks/usePagedResource'
-import type { Departure, DepartureStatus, EntityId, Hotel, Tour, TourGuide, Vehicle } from '../types'
-import { getErrorMessage } from '../utils/errors'
-import { formatDate } from '../utils/formatters'
+import { api } from '../api/may-khach-api'
+import { PageTitle } from '../components/common/TieuDeTrang'
+import { StatusTag } from '../components/common/TheTrangThai'
+import { usePagedResource } from '../hooks/useTaiNguyenPhanTrang'
+import type { Departure, DepartureStatus, EntityId, Hotel, Tour, TourGuide, Vehicle } from '../types/du-lieu'
+import { getErrorMessage } from '../utils/loi'
+import { formatDate } from '../utils/dinh-dang'
 
 interface DepartureFormValues {
   tourId: EntityId

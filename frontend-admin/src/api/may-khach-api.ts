@@ -1,7 +1,7 @@
 import axios, { type AxiosResponse } from 'axios'
-import { ADMIN_AUTH_KEY } from '../constants/auth'
-import type { ApiEnvelope } from '../types'
-import { readAdminSession } from '../utils/storage'
+import { ADMIN_AUTH_KEY } from '../constants/xac-thuc'
+import type { ApiEnvelope } from '../types/du-lieu'
+import { readAdminSession } from '../utils/luu-tru'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
 

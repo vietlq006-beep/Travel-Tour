@@ -1,8 +1,8 @@
 import { Alert, Button, Card, Form, Input, Typography } from 'antd'
 import { useState } from 'react'
-import { api, unwrap } from '../api/client'
-import type { AdminSession, ApiEnvelope } from '../types'
-import { getErrorMessage } from '../utils/errors'
+import { api, unwrap } from '../api/may-khach-api'
+import type { AdminSession, ApiEnvelope } from '../types/du-lieu'
+import { getErrorMessage } from '../utils/loi'
 
 interface LoginValues {
   email: string

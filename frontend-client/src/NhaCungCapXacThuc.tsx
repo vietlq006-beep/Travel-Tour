@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { api, dataOf } from './api'
-import { AuthContext } from './authContext'
-import type { ApiEnvelope, AuthContextValue, AuthState, LoginCredentials, RegisterForm } from './types'
+import { api, dataOf } from './dich-vu-api'
+import { AuthContext } from './ngu-canh-xac-thuc'
+import type { ApiEnvelope, AuthContextValue, AuthState, LoginCredentials, RegisterForm } from './types/du-lieu'
 
 const STORAGE_KEY = 'leviet_client_auth'
 const EMPTY_AUTH: AuthState = { user: null, token: null }

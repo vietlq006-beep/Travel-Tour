@@ -2,17 +2,17 @@ import { App as AntApp, ConfigProvider } from 'antd'
 import 'antd/dist/reset.css'
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import './App.css'
-import { AdminLayout } from './components/layout/AdminLayout'
-import { ProtectedRoute } from './components/routing/ProtectedRoute'
-import { useAdminSession } from './hooks/useAdminSession'
+import './ung-dung.css'
+import { AdminLayout } from './components/layout/BoCucQuanTri'
+import { ProtectedRoute } from './components/routing/TuyenDuongBaoVe'
+import { useAdminSession } from './hooks/usePhienQuanTri'
 
-const LoginPage = lazy(async () => ({ default: (await import('./pages/LoginPage')).LoginPage }))
-const DashboardPage = lazy(async () => ({ default: (await import('./pages/DashboardPage')).DashboardPage }))
-const CatalogPage = lazy(async () => ({ default: (await import('./pages/CatalogPage')).CatalogPage }))
-const DeparturesPage = lazy(async () => ({ default: (await import('./pages/DeparturesPage')).DeparturesPage }))
-const PaymentsPage = lazy(async () => ({ default: (await import('./pages/PaymentsPage')).PaymentsPage }))
-const ReportsPage = lazy(async () => ({ default: (await import('./pages/ReportsPage')).ReportsPage }))
+const LoginPage = lazy(async () => ({ default: (await import('./pages/TrangDangNhap')).LoginPage }))
+const DashboardPage = lazy(async () => ({ default: (await import('./pages/TrangTongQuan')).DashboardPage }))
+const CatalogPage = lazy(async () => ({ default: (await import('./pages/TrangDanhMucTour')).CatalogPage }))
+const DeparturesPage = lazy(async () => ({ default: (await import('./pages/TrangKhoiHanh')).DeparturesPage }))
+const PaymentsPage = lazy(async () => ({ default: (await import('./pages/TrangThanhToan')).PaymentsPage }))
+const ReportsPage = lazy(async () => ({ default: (await import('./pages/TrangBaoCao')).ReportsPage }))
 
 function PageLoader() {
   return <div className="route-loader">Đang tải...</div>

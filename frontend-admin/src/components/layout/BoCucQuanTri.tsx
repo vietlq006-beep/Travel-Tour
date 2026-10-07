@@ -11,7 +11,7 @@ import {
 import { Button, Grid, Layout, Menu, Space, Typography, type MenuProps } from 'antd'
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import type { AdminSession } from '../../types'
+import type { AdminSession } from '../../types/du-lieu'
 
 const { Header, Content, Sider } = Layout
 

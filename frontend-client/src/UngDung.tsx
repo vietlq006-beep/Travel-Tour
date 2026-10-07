@@ -1,16 +1,16 @@
 import { lazy, Suspense, useEffect, type ReactElement } from 'react'
 import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import AuthProvider from './auth'
-import { useAuth } from './authContext'
-import Layout from './components/Layout'
+import AuthProvider from './NhaCungCapXacThuc'
+import { useAuth } from './ngu-canh-xac-thuc'
+import Layout from './components/BoCuc'
 
-const AuthPage = lazy(() => import('./pages/AuthPage'))
-const BookingsPage = lazy(() => import('./pages/BookingsPage'))
-const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
-const HomePage = lazy(() => import('./pages/HomePage'))
-const PaymentReturnPage = lazy(() => import('./pages/PaymentReturnPage'))
-const TourDetailPage = lazy(() => import('./pages/TourDetailPage'))
-const ToursPage = lazy(() => import('./pages/ToursPage'))
+const AuthPage = lazy(() => import('./pages/TrangXacThuc'))
+const BookingsPage = lazy(() => import('./pages/TrangDonDat'))
+const CheckoutPage = lazy(() => import('./pages/TrangThanhToan'))
+const HomePage = lazy(() => import('./pages/TrangChu'))
+const PaymentReturnPage = lazy(() => import('./pages/TrangKetQuaThanhToan'))
+const TourDetailPage = lazy(() => import('./pages/TrangChiTietTour'))
+const ToursPage = lazy(() => import('./pages/TrangDanhSachTour'))
 
 function PageLoader() {
   return <div className="min-h-[65vh] animate-pulse bg-slate-100" />

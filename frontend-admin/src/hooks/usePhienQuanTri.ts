@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { AdminSession } from '../types'
-import { clearAdminSession, readAdminSession, writeAdminSession } from '../utils/storage'
+import type { AdminSession } from '../types/du-lieu'
+import { clearAdminSession, readAdminSession, writeAdminSession } from '../utils/luu-tru'
 
 export function useAdminSession() {
   const [session, setSession] = useState<AdminSession | null>(readAdminSession)

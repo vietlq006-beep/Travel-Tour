@@ -1,9 +1,9 @@
 import { ArrowLeft, BadgePercent, CalendarDays, CheckCircle2, CreditCard, Minus, Plus, ShieldCheck, UserRound } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { api, apiError, assetUrl, dataOf, FALLBACK_IMAGE, formatDate, formatMoney } from '../api'
-import { Alert } from '../components/Shared'
-import type { ApiEnvelope, Booking, Gender, Participant, PassengerType, PaymentCreation, Tour, VoucherValidation } from '../types'
+import { api, apiError, assetUrl, dataOf, FALLBACK_IMAGE, formatDate, formatMoney } from '../dich-vu-api'
+import { Alert } from '../components/DungChung'
+import type { ApiEnvelope, Booking, Gender, Participant, PassengerType, PaymentCreation, Tour, VoucherValidation } from '../types/du-lieu'
 
 const TODAY = new Date().toISOString().slice(0, 10)
 

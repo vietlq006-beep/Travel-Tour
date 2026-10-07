@@ -1,8 +1,8 @@
 import { CalendarDays, Clock3, MapPin, SearchX, Star, Users } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { assetUrl, FALLBACK_IMAGE, formatDate, formatMoney } from '../api'
-import type { Departure, Tour } from '../types'
+import { assetUrl, FALLBACK_IMAGE, formatDate, formatMoney } from '../dich-vu-api'
+import type { Departure, Tour } from '../types/du-lieu'
 
 export function TourCard({ tour }: { tour: Tour }) {
   const prices = (tour.departures || []).map((item) => Number(item.adultPrice)).filter(Number.isFinite)

@@ -1,4 +1,4 @@
-import type { QueryParams } from '../types'
+import type { QueryParams } from '../types/du-lieu'
 
 export function compactParams(params: QueryParams = {}): QueryParams {
   return Object.fromEntries(

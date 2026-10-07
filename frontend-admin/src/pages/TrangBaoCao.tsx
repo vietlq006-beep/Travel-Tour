@@ -2,11 +2,11 @@ import { DownloadOutlined } from '@ant-design/icons'
 import { App as AntApp, Button, Card, Col, DatePicker, Form, Row, Select } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState } from 'react'
-import { api } from '../api/client'
-import { PageTitle } from '../components/common/PageTitle'
-import type { BookingStatus } from '../types'
-import { getErrorMessage } from '../utils/errors'
-import { compactParams } from '../utils/query'
+import { api } from '../api/may-khach-api'
+import { PageTitle } from '../components/common/TieuDeTrang'
+import type { BookingStatus } from '../types/du-lieu'
+import { getErrorMessage } from '../utils/loi'
+import { compactParams } from '../utils/truy-van'
 
 const { RangePicker } = DatePicker
 

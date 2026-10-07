@@ -2,10 +2,10 @@ import { EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { App as AntApp, Button, Card, Drawer, Form, Input, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useState } from 'react'
-import { api } from '../../api/client'
-import { usePagedResource } from '../../hooks/usePagedResource'
-import type { Category } from '../../types'
-import { getErrorMessage } from '../../utils/errors'
+import { api } from '../../api/may-khach-api'
+import { usePagedResource } from '../../hooks/useTaiNguyenPhanTrang'
+import type { Category } from '../../types/du-lieu'
+import { getErrorMessage } from '../../utils/loi'
 
 interface CategoryFormValues {
   name: string

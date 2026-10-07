@@ -1,9 +1,9 @@
 import { ArrowLeft, CalendarDays, Check, ChevronRight, Clock3, MapPin, ShieldCheck, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { api, apiError, assetUrl, dataOf, FALLBACK_IMAGE, formatMoney } from '../api'
-import { Alert, DepartureCard } from '../components/Shared'
-import type { ApiEnvelope, Departure, Tour } from '../types'
+import { api, apiError, assetUrl, dataOf, FALLBACK_IMAGE, formatMoney } from '../dich-vu-api'
+import { Alert, DepartureCard } from '../components/DungChung'
+import type { ApiEnvelope, Departure, Tour } from '../types/du-lieu'
 
 export default function TourDetailPage() {
   const { id } = useParams<{ id: string }>()

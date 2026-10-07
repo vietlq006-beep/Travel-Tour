@@ -2,10 +2,10 @@ import { EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { App as AntApp, Button, Card, Col, Drawer, Form, Input, InputNumber, Row, Select, Switch, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useState } from 'react'
-import { api, unwrap } from '../../api/client'
-import { usePagedResource } from '../../hooks/usePagedResource'
-import type { ApiEnvelope, Category, Destination, EntityId, Tour } from '../../types'
-import { getErrorMessage } from '../../utils/errors'
+import { api, unwrap } from '../../api/may-khach-api'
+import { usePagedResource } from '../../hooks/useTaiNguyenPhanTrang'
+import type { ApiEnvelope, Category, Destination, EntityId, Tour } from '../../types/du-lieu'
+import { getErrorMessage } from '../../utils/loi'
 
 interface TourFormValues {
   code: string

@@ -1,10 +1,10 @@
 import { ArrowRight, Compass, Eye, EyeOff } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { apiError } from '../api'
-import { useAuth } from '../authContext'
-import { Alert } from '../components/Shared'
-import type { RegisterForm } from '../types'
+import { apiError } from '../dich-vu-api'
+import { useAuth } from '../ngu-canh-xac-thuc'
+import { Alert } from '../components/DungChung'
+import type { RegisterForm } from '../types/du-lieu'
 
 interface AuthPageProps {
   mode: 'login' | 'register'

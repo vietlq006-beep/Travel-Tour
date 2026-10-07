@@ -15,16 +15,16 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { api, unwrap } from '../api/client'
-import { PageTitle } from '../components/common/PageTitle'
+import { api, unwrap } from '../api/may-khach-api'
+import { PageTitle } from '../components/common/TieuDeTrang'
 import type {
   ApiEnvelope,
   DashboardAnalytics,
   DashboardSummary,
   TopTour,
-} from '../types'
-import { getErrorMessage } from '../utils/errors'
-import { formatMoney } from '../utils/formatters'
+} from '../types/du-lieu'
+import { getErrorMessage } from '../utils/loi'
+import { formatMoney } from '../utils/dinh-dang'
 
 const { RangePicker } = DatePicker
 type DateRange = [Dayjs, Dayjs] | null

@@ -1,9 +1,9 @@
 import { ArrowRight, BadgeCheck, Headphones, MapPin, Search, ShieldCheck, Sparkles, type LucideIcon } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { api, dataOf } from '../api'
-import { LoadingGrid, TourCard } from '../components/Shared'
-import type { ApiEnvelope, Destination, PaginatedResult, Tour } from '../types'
+import { api, dataOf } from '../dich-vu-api'
+import { LoadingGrid, TourCard } from '../components/DungChung'
+import type { ApiEnvelope, Destination, PaginatedResult, Tour } from '../types/du-lieu'
 
 interface Benefit { icon: LucideIcon; title: string; text: string }
 

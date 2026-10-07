@@ -1,5 +1,5 @@
-import { ADMIN_AUTH_KEY } from '../constants/auth'
-import type { AdminSession } from '../types'
+import { ADMIN_AUTH_KEY } from '../constants/xac-thuc'
+import type { AdminSession } from '../types/du-lieu'
 
 export function readAdminSession(): AdminSession | null {
   try {

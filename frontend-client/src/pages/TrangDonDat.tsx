@@ -1,9 +1,9 @@
 import { CalendarDays, ChevronDown, ChevronUp, CreditCard, MapPin, ReceiptText, RotateCcw, Users, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { api, apiError, assetUrl, dataOf, FALLBACK_IMAGE, formatDate, formatMoney } from '../api'
-import { Alert, EmptyState } from '../components/Shared'
-import type { ApiEnvelope, Booking, BookingStatus, EntityId, PaginatedResult, PaymentCreation, PaymentStatus } from '../types'
+import { api, apiError, assetUrl, dataOf, FALLBACK_IMAGE, formatDate, formatMoney } from '../dich-vu-api'
+import { Alert, EmptyState } from '../components/DungChung'
+import type { ApiEnvelope, Booking, BookingStatus, EntityId, PaginatedResult, PaymentCreation, PaymentStatus } from '../types/du-lieu'
 
 const STATUS: Record<BookingStatus, { label: string; style: string }> = {
   PENDING_PAYMENT: { label: 'Chờ thanh toán', style: 'bg-amber-50 text-amber-700 border-amber-200' },

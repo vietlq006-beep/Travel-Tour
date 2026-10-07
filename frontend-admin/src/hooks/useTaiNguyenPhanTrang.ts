@@ -1,9 +1,9 @@
 import { App as AntApp } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { api, unwrap } from '../api/client'
-import type { PaginatedResult, Pagination, QueryParams } from '../types'
-import { getErrorMessage } from '../utils/errors'
-import { compactParams } from '../utils/query'
+import { api, unwrap } from '../api/may-khach-api'
+import type { PaginatedResult, Pagination, QueryParams } from '../types/du-lieu'
+import { getErrorMessage } from '../utils/loi'
+import { compactParams } from '../utils/truy-van'
 
 const EMPTY_PAGINATION: Pagination = { page: 1, limit: 10, totalItems: 0 }
 

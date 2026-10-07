@@ -1,7 +1,7 @@
 import { ChevronDown, Compass, LogIn, LogOut, Menu, Phone, ReceiptText, UserRound, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate, type NavLinkRenderProps } from 'react-router-dom'
-import { useAuth } from '../authContext'
+import { useAuth } from '../ngu-canh-xac-thuc'
 
 const navClass = ({ isActive }: NavLinkRenderProps) =>
   `text-sm font-semibold transition ${isActive ? 'text-brand-700' : 'text-slate-600 hover:text-brand-700'}`

@@ -1,9 +1,9 @@
 import { SlidersHorizontal, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { api, apiError, dataOf } from '../api'
-import { Alert, EmptyState, LoadingGrid, TourCard } from '../components/Shared'
-import type { ApiEnvelope, Destination, PaginatedResult, Tour } from '../types'
+import { api, apiError, dataOf } from '../dich-vu-api'
+import { Alert, EmptyState, LoadingGrid, TourCard } from '../components/DungChung'
+import type { ApiEnvelope, Destination, PaginatedResult, Tour } from '../types/du-lieu'
 
 const EMPTY_RESULT: PaginatedResult<Tour> = {
   items: [],
