@@ -57,6 +57,7 @@ export interface Tour {
   durationNights: number
   thumbnail: string
   images?: string[]
+  videoUrl?: string
   overview?: string
   isActive: boolean
 }

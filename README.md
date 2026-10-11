@@ -51,6 +51,7 @@ Test tích hợp sử dụng database trong `.env`, tự tạo dữ liệu có t
 
 - [Hướng dẫn API](backend/docs/API.md)
 - [Cơ sở dữ liệu và migration](backend/docs/DATABASE.md)
+- [Dữ liệu tour và nguồn media](backend/docs/SEED_DATA.md)
 - [Cài đặt và triển khai](backend/docs/DEPLOYMENT.md)
 
 ## Cấu trúc chính

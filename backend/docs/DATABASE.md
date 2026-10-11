@@ -20,7 +20,7 @@ Không dùng `sequelize.sync({ alter: true })` trên production. Server chỉ ch
 | `hotels` | Khách sạn đối tác | 1-N đợt khởi hành |
 | `vehicles` | Phương tiện | 1-N đợt khởi hành |
 | `tour_guides` | Hướng dẫn viên | 1-N đợt khởi hành |
-| `tours` | Sản phẩm tour mẫu | lịch trình, đợt, đánh giá |
+| `tours` | Sản phẩm tour, thư viện ảnh và video | lịch trình, đợt, đánh giá |
 | `tour_destinations` | Bảng nối | khóa kép `(tour_id, destination_id)` |
 | `tour_itineraries` | Lịch trình từng ngày | duy nhất `(tour_id, day_number)` |
 | `tour_departures` | Lịch chạy và giá bán | thuộc tour, có tài nguyên và booking |
@@ -54,7 +54,7 @@ npm run seed
 
 `schema.sql` có lệnh `DROP TABLE`; chỉ dùng cho database mới hoặc khi chắc chắn được phép reset. `npm run migrate` không xóa bảng/dữ liệu.
 
-Seeder có tính lặp an toàn ở mức dữ liệu mẫu: chỉ thêm nhóm dữ liệu khi bảng tương ứng đang rỗng và không tạo lại tài khoản nếu email đã tồn tại.
+Seeder đồng bộ dữ liệu theo tên/mã ổn định, vì vậy có thể chạy lại để cập nhật nội dung mà không nhân bản tour. Chi tiết nguồn nội dung và media xem tại [SEED_DATA.md](SEED_DATA.md).
 
 ## Migration
 
@@ -71,6 +71,7 @@ Các migration hiện có:
 1. `001-harden-constraints`: unique/check constraints.
 2. `002-add-query-indexes`: chỉ mục cho lọc, phân trang, dashboard.
 3. `003-add-refunded-payment-status`: thêm trạng thái thanh toán `REFUNDED`.
+4. `004-add-tour-video-url`: thêm URL video YouTube cho tour.
 
 Khi thêm migration:
 

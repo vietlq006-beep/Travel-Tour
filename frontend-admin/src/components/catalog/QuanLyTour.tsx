@@ -16,6 +16,7 @@ interface TourFormValues {
   destinationIds?: EntityId[]
   thumbnail: string
   images?: string
+  videoUrl?: string
   overview?: string
   isActive: boolean
 }
@@ -108,6 +109,7 @@ export function TourManager() {
           </Form.Item>
           <Form.Item name="thumbnail" label="Ảnh đại diện" rules={[{ required: true }]}><Input placeholder="https://..." /></Form.Item>
           <Form.Item name="images" label="Ảnh chi tiết, mỗi dòng một URL"><Input.TextArea rows={3} /></Form.Item>
+          <Form.Item name="videoUrl" label="Video giới thiệu YouTube" rules={[{ type: 'url', warningOnly: true }]}><Input placeholder="https://www.youtube.com/watch?v=..." /></Form.Item>
           <Form.Item name="overview" label="Tổng quan"><Input.TextArea rows={4} /></Form.Item>
           <Form.Item name="isActive" label="Đang bán" valuePropName="checked"><Switch /></Form.Item>
           <Button block type="primary" htmlType="submit">Lưu tour</Button>

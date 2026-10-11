@@ -9,9 +9,25 @@ const parseDestinationIds = (value) => {
   return null;
 };
 
+const isSupportedVideoUrl = (value) => {
+  if (isBlank(value)) return true;
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    return url.protocol === 'https:' && [
+      'youtube.com',
+      'm.youtube.com',
+      'youtu.be',
+      'youtube-nocookie.com'
+    ].includes(host);
+  } catch {
+    return false;
+  }
+};
+
 const validateTour = (req) => {
   const errors = [];
-  const { code, name, categoryId, durationDays, durationNights, thumbnail } = req.body;
+  const { code, name, categoryId, durationDays, durationNights, thumbnail, videoUrl } = req.body;
   if (req.method === 'POST' && isBlank(code)) errors.push({ field: 'code', message: 'Mã tour là bắt buộc' });
   if (code !== undefined && !/^[A-Za-z0-9_-]{3,30}$/.test(code)) errors.push({ field: 'code', message: 'Mã tour gồm 3-30 chữ, số, gạch ngang hoặc gạch dưới' });
   if (req.method === 'POST' && isBlank(name)) errors.push({ field: 'name', message: 'Tên tour là bắt buộc' });
@@ -19,6 +35,9 @@ const validateTour = (req) => {
   if ((req.method === 'POST' || durationDays !== undefined) && !isPositiveInteger(durationDays)) errors.push({ field: 'durationDays', message: 'Số ngày phải là số nguyên dương' });
   if ((req.method === 'POST' || durationNights !== undefined) && !isNonNegativeInteger(durationNights)) errors.push({ field: 'durationNights', message: 'Số đêm phải là số nguyên không âm' });
   if (req.method === 'POST' && !req.files?.thumbnail?.[0] && isBlank(thumbnail)) errors.push({ field: 'thumbnail', message: 'Ảnh đại diện tour là bắt buộc' });
+  if (videoUrl !== undefined && !isSupportedVideoUrl(videoUrl)) {
+    errors.push({ field: 'videoUrl', message: 'Video phải là URL HTTPS hợp lệ từ YouTube' });
+  }
   const destinationIds = parseDestinationIds(req.body.destinationIds);
   if (destinationIds !== undefined && (!destinationIds || destinationIds.some((id) => !isPositiveInteger(id)))) {
     errors.push({ field: 'destinationIds', message: 'Danh sách điểm đến không hợp lệ' });
@@ -28,4 +47,4 @@ const validateTour = (req) => {
   return errors;
 };
 
-module.exports = { validateTour, parseDestinationIds };
+module.exports = { validateTour, parseDestinationIds, isSupportedVideoUrl };

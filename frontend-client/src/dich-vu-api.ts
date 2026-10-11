@@ -52,6 +52,24 @@ export function assetUrl(value?: string | null): string {
   return `${SERVER_URL}${value.startsWith('/') ? '' : '/'}${value}`
 }
 
+export function youtubeEmbedUrl(value?: string | null): string {
+  if (!value) return ''
+  try {
+    const url = new URL(value)
+    const host = url.hostname.toLowerCase().replace(/^www\./, '')
+    let videoId = ''
+    if (host === 'youtu.be') videoId = url.pathname.split('/').filter(Boolean)[0] || ''
+    if (['youtube.com', 'm.youtube.com', 'youtube-nocookie.com'].includes(host)) {
+      videoId = url.searchParams.get('v') || url.pathname.match(/^\/(?:embed|shorts)\/([A-Za-z0-9_-]{11})/)?.[1] || ''
+    }
+    return /^[A-Za-z0-9_-]{11}$/.test(videoId)
+      ? `https://www.youtube-nocookie.com/embed/${videoId}`
+      : ''
+  } catch {
+    return ''
+  }
+}
+
 export function formatMoney(value: number | string | null | undefined): string {
   return `${Number(value || 0).toLocaleString('vi-VN')} đ`
 }

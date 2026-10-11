@@ -84,6 +84,7 @@ export interface Tour {
   name: string
   thumbnail: string
   images?: string[]
+  videoUrl?: string
   overview?: string
   durationDays: number
   durationNights: number

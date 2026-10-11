@@ -43,6 +43,11 @@ const Tour = sequelize.define('Tour', {
     type: DataTypes.JSON,
     allowNull: true
   },
+  videoUrl: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    field: 'video_url'
+  },
   isActive: {
     type: DataTypes.BOOLEAN,
     allowNull: false,

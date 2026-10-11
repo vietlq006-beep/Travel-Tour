@@ -1,7 +1,7 @@
 import { ArrowLeft, CalendarDays, Check, ChevronRight, Clock3, MapPin, ShieldCheck, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { api, apiError, assetUrl, dataOf, FALLBACK_IMAGE, formatMoney } from '../dich-vu-api'
+import { api, apiError, assetUrl, dataOf, FALLBACK_IMAGE, formatMoney, youtubeEmbedUrl } from '../dich-vu-api'
 import { Alert, DepartureCard } from '../components/DungChung'
 import type { ApiEnvelope, Departure, Tour } from '../types/du-lieu'
 
@@ -28,6 +28,7 @@ export default function TourDetailPage() {
   if (error || !tour) return <div className="mx-auto min-h-[70vh] max-w-3xl px-4 py-16"><Alert>{error || 'Không tìm thấy tour.'}</Alert><Link to="/tours" className="mt-5 inline-flex items-center gap-2 font-bold text-brand-700"><ArrowLeft size={18} /> Quay lại danh sách</Link></div>
 
   const gallery = [tour.thumbnail, ...(Array.isArray(tour.images) ? tour.images : [])].filter(Boolean).slice(0, 3)
+  const videoEmbedUrl = youtubeEmbedUrl(tour.videoUrl)
   return (
     <>
       <section className="bg-white">
@@ -51,6 +52,7 @@ export default function TourDetailPage() {
               <span className="flex items-center gap-2 text-amber-600"><Star size={17} fill="currentColor" /> {Number(tour.rating?.average || 0).toFixed(1)} ({tour.rating?.count || 0})</span>
             </div>
             <div className="mt-9 border-t border-slate-200 pt-8"><h2 className="text-2xl font-black">Tổng quan hành trình</h2><p className="mt-4 whitespace-pre-line leading-7 text-slate-600">{tour.overview || 'Một hành trình được chuẩn bị kỹ lưỡng để bạn tận hưởng trọn vẹn từng điểm đến.'}</p></div>
+            {videoEmbedUrl && <div className="mt-10 border-t border-slate-200 pt-8"><h2 className="text-2xl font-black">Video điểm đến</h2><div className="mt-5 aspect-video overflow-hidden rounded-md bg-slate-950 shadow-lg"><iframe className="h-full w-full" src={videoEmbedUrl} title={`Video giới thiệu ${tour.name}`} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen /></div><p className="mt-3 text-xs text-slate-400">Video giới thiệu từ kênh du lịch chính thức; nội dung lịch trình và dịch vụ áp dụng theo thông tin tour bên dưới.</p></div>}
             <div className="mt-10 border-t border-slate-200 pt-8"><h2 className="text-2xl font-black">Lịch trình theo ngày</h2><div className="mt-6 space-y-0">{tour.itineraries?.length ? tour.itineraries.map((item, index) => <div key={item.id || item.dayNumber} className="relative grid grid-cols-[48px_1fr] gap-4 pb-8"><div className="relative z-10 grid size-12 place-items-center rounded-md bg-brand-700 text-sm font-black text-white">N{item.dayNumber}</div>{index < (tour.itineraries?.length || 0) - 1 && <span className="absolute left-6 top-12 h-full w-px bg-emerald-200" />}<div className="pt-1"><h3 className="text-lg font-extrabold">{item.title}</h3><p className="mt-2 leading-7 text-slate-600">{item.description}</p></div></div>) : <p className="text-slate-500">Lịch trình chi tiết đang được cập nhật.</p>}</div></div>
             <div className="mt-10 border-t border-slate-200 pt-8"><h2 className="text-2xl font-black">An tâm trên mỗi hành trình</h2><div className="mt-5 grid gap-4 sm:grid-cols-2">{['Giá công khai, không phí ẩn', 'Xác nhận chỗ theo thời gian thực', 'Thông tin đoàn được bảo mật', 'Hỗ trợ trong suốt chuyến đi'].map((text) => <p key={text} className="flex items-center gap-3 rounded-md border border-slate-200 bg-white p-4 text-sm font-semibold"><Check size={18} className="text-brand-600" /> {text}</p>)}</div></div>
           </div>

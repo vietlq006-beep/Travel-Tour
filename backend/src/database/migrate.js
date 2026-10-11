@@ -5,7 +5,8 @@ const { sequelize } = require('../models');
 const migrations = [
   require('./migrations/001-harden-constraints'),
   require('./migrations/002-add-query-indexes'),
-  require('./migrations/003-add-refunded-payment-status')
+  require('./migrations/003-add-refunded-payment-status'),
+  require('./migrations/004-add-tour-video-url')
 ];
 
 const run = async () => {

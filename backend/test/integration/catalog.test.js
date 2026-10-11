@@ -29,10 +29,13 @@ test('admin tạo dữ liệu nền và tour liên kết điểm đến', async 
   guideId = (await api.post('/api/tour-guides').set(auth(token)).send({ fullName: `HDV ${marker}`, phoneNumber: '0901234567', experienceYears: 3 }).expect(201)).body.data.id;
   const tour = await api.post('/api/tours').set(auth(token)).send({
     categoryId, code: marker, name: `Tour ${marker}`, durationDays: 3, durationNights: 2,
-    thumbnail: 'https://example.com/tour.jpg', destinationIds: [destinationId]
+    thumbnail: 'https://example.com/tour.jpg',
+    videoUrl: 'https://www.youtube.com/watch?v=YHBqLih80uw',
+    destinationIds: [destinationId]
   }).expect(201);
   tourId = tour.body.data.id;
   assert.equal(tour.body.data.destinations[0].id, destinationId);
+  assert.equal(tour.body.data.videoUrl, 'https://www.youtube.com/watch?v=YHBqLih80uw');
 });
 
 test('admin cấu hình lịch trình và đợt khởi hành', async () => {
@@ -50,6 +53,7 @@ test('admin cấu hình lịch trình và đợt khởi hành', async () => {
 test('tra cứu công khai trả đúng tour vừa tạo', async () => {
   const response = await api.get(`/api/tours/${tourId}`).expect(200);
   assert.equal(response.body.data.code, marker);
+  assert.equal(response.body.data.videoUrl, 'https://www.youtube.com/watch?v=YHBqLih80uw');
   assert.equal(response.body.data.itineraries.length, 1);
   assert.equal(response.body.data.departures.length, 1);
 });
