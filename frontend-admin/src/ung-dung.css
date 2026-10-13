@@ -151,6 +151,75 @@
   min-width: 720px;
 }
 
+.customer-stat-grid {
+  margin-bottom: 16px;
+}
+
+.customer-stat-grid .ant-card {
+  height: 100%;
+  border-color: #e6eeeb;
+  box-shadow: 0 10px 30px -24px rgba(15, 118, 110, 0.5);
+}
+
+.customer-filter-card {
+  margin-bottom: 16px;
+}
+
+.customer-email {
+  display: block;
+  max-width: 230px;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-profile-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 18px;
+  border: 1px solid #dcece7;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f0fdfa, #ffffff);
+}
+
+.customer-profile-head h4.ant-typography {
+  margin: 0 0 2px;
+}
+
+.customer-profile-tags {
+  margin-top: 8px;
+}
+
+.customer-history-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 28px 0 14px;
+}
+
+.customer-history-title h5.ant-typography {
+  margin: 0 0 2px;
+}
+
+.payment-customer-email {
+  display: block;
+  max-width: 200px;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.payment-rejection-field {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
 @media (max-width: 900px) {
   .login-shell {
     grid-template-columns: 1fr;

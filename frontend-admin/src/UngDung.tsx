@@ -12,6 +12,7 @@ const DashboardPage = lazy(async () => ({ default: (await import('./pages/TrangT
 const CatalogPage = lazy(async () => ({ default: (await import('./pages/TrangDanhMucTour')).CatalogPage }))
 const DeparturesPage = lazy(async () => ({ default: (await import('./pages/TrangKhoiHanh')).DeparturesPage }))
 const PaymentsPage = lazy(async () => ({ default: (await import('./pages/TrangThanhToan')).PaymentsPage }))
+const CustomersPage = lazy(async () => ({ default: (await import('./pages/TrangKhachHang')).CustomersPage }))
 const ReportsPage = lazy(async () => ({ default: (await import('./pages/TrangBaoCao')).ReportsPage }))
 
 function PageLoader() {
@@ -38,6 +39,7 @@ export default function App() {
                     <Route index element={<DashboardPage />} />
                     <Route path="catalog" element={<CatalogPage />} />
                     <Route path="departures" element={<DeparturesPage />} />
+                    <Route path="customers" element={<CustomersPage />} />
                     <Route path="payments" element={<PaymentsPage />} />
                     <Route path="reports" element={<ReportsPage />} />
                   </Route>

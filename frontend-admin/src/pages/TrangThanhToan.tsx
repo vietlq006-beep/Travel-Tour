@@ -1,136 +1,138 @@
-import { CheckCircleOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
-import { App as AntApp, Button, Card, Descriptions, Modal, Space, Table } from 'antd'
+import { CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Alert, App as AntApp, Badge, Button, Card, Input, Modal, Space, Table, Tabs, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useState } from 'react'
-import { api, unwrap } from '../api/may-khach-api'
+import { api } from '../api/may-khach-api'
 import { PageTitle } from '../components/common/TieuDeTrang'
 import { StatusTag } from '../components/common/TheTrangThai'
 import { usePagedResource } from '../hooks/useTaiNguyenPhanTrang'
-import type { ApiEnvelope, Booking, Payment, PaymentMethod, PaymentStatus } from '../types/du-lieu'
-import { getErrorMessage } from '../utils/loi'
+import type { Payment } from '../types/du-lieu'
 import { formatDate, formatMoney } from '../utils/dinh-dang'
+import { getErrorMessage } from '../utils/loi'
+
+function rejectionReason(payment: Payment) {
+  if (payment.responseData?.rejectionReason) return payment.responseData.rejectionReason
+  if (payment.responseData?.reason === 'BOOKING_CANCELLED') return 'Đơn đặt tour đã bị hủy.'
+  return 'Không có lý do (dữ liệu cũ).'
+}
 
 export function PaymentsPage() {
   const { message, modal } = AntApp.useApp()
-  const bookings = usePagedResource<Booking>('/bookings', { page: 1, limit: 10, status: 'PENDING_PAYMENT' })
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [selected, setSelected] = useState<Booking | null>(null)
-  const [loadingPayments, setLoadingPayments] = useState(false)
+  const pending = usePagedResource<Payment>('/payments', { page: 1, limit: 10, status: 'PENDING', paymentMethod: 'VIETQR' })
+  const rejected = usePagedResource<Payment>('/payments', { page: 1, limit: 10, status: 'FAILED', paymentMethod: 'VIETQR' })
+  const [rejecting, setRejecting] = useState<Payment | null>(null)
+  const [reason, setReason] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  const loadPayments = async (booking: Booking) => {
-    setSelected(booking)
-    setLoadingPayments(true)
+  const reload = () => Promise.all([pending.load(), rejected.load()])
+
+  const approve = (payment: Payment) => {
+    const bookingCode = payment.booking?.bookingCode || `#${payment.id}`
+    modal.confirm({
+      title: `Xác nhận thanh toán ${bookingCode}?`,
+      content: 'Đơn hàng sẽ được chuyển sang trạng thái đã xác nhận sau khi duyệt.',
+      okText: 'Xác nhận đã nhận tiền',
+      cancelText: 'Hủy',
+      async onOk() {
+        const transactionId = `VIETQR-${dayjs().format('YYYYMMDD-HHmmss')}-${payment.id}`
+        try {
+          await api.patch(`/payments/${payment.id}/status`, {
+            status: 'SUCCESS',
+            transactionId,
+            responseData: { approvedBy: 'admin-console', approvedAt: new Date().toISOString() },
+          })
+          void message.success('Đã duyệt thanh toán và xác nhận đơn')
+          await reload()
+        } catch (error) {
+          void message.error(getErrorMessage(error))
+          throw error
+        }
+      },
+    })
+  }
+
+  const openReject = (payment: Payment) => {
+    setRejecting(payment)
+    setReason('')
+  }
+
+  const submitRejection = async () => {
+    if (!rejecting) return
+    const rejectionReason = reason.trim()
+    if (rejectionReason.length < 5) {
+      void message.warning('Vui lòng nhập lý do từ chối ít nhất 5 ký tự')
+      return
+    }
+    setSubmitting(true)
     try {
-      const data = unwrap<Payment[]>(await api.get<ApiEnvelope<Payment[]>>(`/payments/booking/${booking.id}`))
-      setPayments(data || [])
+      await api.patch(`/payments/${rejecting.id}/status`, { status: 'FAILED', rejectionReason })
+      void message.success('Đã chuyển giao dịch sang danh sách đơn từ chối')
+      setRejecting(null)
+      setReason('')
+      await reload()
     } catch (error) {
       void message.error(getErrorMessage(error))
     } finally {
-      setLoadingPayments(false)
+      setSubmitting(false)
     }
   }
 
-  const createVietQrPayment = async (booking: Booking) => {
-    try {
-      await api.post('/payments', { bookingId: booking.id, paymentMethod: 'VIETQR' })
-      void message.success('Đã tạo giao dịch VietQR')
-      await loadPayments(booking)
-    } catch (error) {
-      void message.error(getErrorMessage(error))
-    }
-  }
+  const commonColumns: ColumnsType<Payment> = [
+    { title: 'Mã đơn', render: (_, record) => <Typography.Text strong>{record.booking?.bookingCode || '-'}</Typography.Text>, width: 180 },
+    { title: 'Khách hàng', render: (_, record) => <div><Typography.Text strong>{record.booking?.user?.fullName || '-'}</Typography.Text><Typography.Text type="secondary" className="payment-customer-email">{record.booking?.user?.email || ''}</Typography.Text></div>, width: 220 },
+    { title: 'Tour', render: (_, record) => record.booking?.departure?.tour?.name || '-', minWidth: 240 },
+    { title: 'Ngày đặt', render: (_, record) => formatDate(record.booking?.bookingDate), width: 120 },
+    { title: 'Số tiền', dataIndex: 'amount', render: (value: number) => <Typography.Text strong>{formatMoney(value)}</Typography.Text>, width: 155 },
+  ]
 
-  const approve = async (payment: Payment) => {
-    const transactionId = `VIETQR-${dayjs().format('YYYYMMDD-HHmmss')}-${payment.id}`
-    try {
-      await api.patch(`/payments/${payment.id}/status`, {
-        status: 'SUCCESS',
-        transactionId,
-        responseData: { approvedBy: 'admin-console', approvedAt: new Date().toISOString() },
-      })
-      void message.success('Đã duyệt thanh toán và xác nhận đơn')
-      setPayments((current) => current.map((item) => item.id === payment.id ? { ...item, status: 'SUCCESS', transactionId } : item))
-      await bookings.load()
-    } catch (error) {
-      void message.error(getErrorMessage(error))
-    }
-  }
-
-  const fail = async (payment: Payment) => {
-    try {
-      await api.patch(`/payments/${payment.id}/status`, {
-        status: 'FAILED',
-        responseData: { rejectedBy: 'admin-console', rejectedAt: new Date().toISOString() },
-      })
-      void message.success('Đã từ chối giao dịch')
-      setPayments((current) => current.map((item) => item.id === payment.id ? { ...item, status: 'FAILED' } : item))
-    } catch (error) {
-      void message.error(getErrorMessage(error))
-    }
-  }
-
-  const bookingColumns: ColumnsType<Booking> = [
-    { title: 'Mã đơn', dataIndex: 'bookingCode', width: 180 },
-    { title: 'Khách hàng', render: (_, record) => record.user?.fullName || record.user?.email || '-', width: 220 },
-    { title: 'Tour', render: (_, record) => record.departure?.tour?.name || '-', minWidth: 240 },
-    { title: 'Ngày đặt', dataIndex: 'bookingDate', render: (value: string) => formatDate(value), width: 120 },
-    { title: 'Tổng tiền', dataIndex: 'finalAmount', render: (value: number) => formatMoney(value), width: 160 },
-    { title: 'Trạng thái', dataIndex: 'status', render: (value: string) => <StatusTag value={value} />, width: 160 },
+  const pendingColumns: ColumnsType<Payment> = [
+    ...commonColumns,
+    { title: 'Trạng thái', render: () => <StatusTag value="PENDING" />, width: 120 },
     {
-      title: 'Thanh toán',
-      width: 170,
-      render: (_, record) => (
-        <Space>
-          <Button onClick={() => void loadPayments(record)}>Xem</Button>
-          <Button aria-label="Tạo giao dịch VietQR" icon={<PlusOutlined />} onClick={() => void createVietQrPayment(record)} />
-        </Space>
-      ),
+      title: 'Duyệt giao dịch',
+      fixed: 'right',
+      width: 220,
+      render: (_, record) => <Space><Button type="primary" icon={<CheckCircleOutlined />} onClick={() => approve(record)}>Xác nhận</Button><Button danger icon={<CloseCircleOutlined />} onClick={() => openReject(record)}>Từ chối</Button></Space>,
     },
   ]
 
-  const paymentColumns: ColumnsType<Payment> = [
-    { title: 'Phương thức', dataIndex: 'paymentMethod', render: (value: PaymentMethod) => <StatusTag value={value} /> },
-    { title: 'Số tiền', dataIndex: 'amount', render: (value: number) => formatMoney(value) },
-    { title: 'Trạng thái', dataIndex: 'status', render: (value: PaymentStatus) => <StatusTag value={value} /> },
-    { title: 'Mã tham chiếu', dataIndex: 'transactionId' },
-    {
-      title: 'Duyệt',
-      width: 190,
-      render: (_, record) => (
-        <Space>
-          <Button type="primary" icon={<CheckCircleOutlined />} disabled={record.status !== 'PENDING' || !['VIETQR', 'BANK_TRANSFER'].includes(record.paymentMethod)} onClick={() => void approve(record)}>Xác nhận</Button>
-          <Button danger disabled={record.status !== 'PENDING'} onClick={() => modal.confirm({ title: 'Từ chối giao dịch?', onOk: () => fail(record) })}>Từ chối</Button>
-        </Space>
-      ),
-    },
+  const rejectedColumns: ColumnsType<Payment> = [
+    ...commonColumns,
+    { title: 'Lý do từ chối', render: (_, record) => <Typography.Text type="danger">{rejectionReason(record)}</Typography.Text>, minWidth: 260 },
+    { title: 'Người từ chối', render: (_, record) => record.responseData?.rejectedBy?.fullName || record.responseData?.rejectedBy?.email || 'Quản trị viên', width: 160 },
+    { title: 'Thời gian', render: (_, record) => record.responseData?.rejectedAt ? dayjs(record.responseData.rejectedAt).format('DD/MM/YYYY HH:mm') : formatDate(record.updatedAt), width: 155 },
+    { title: 'Trạng thái', render: () => <Tag color="error" icon={<CloseCircleOutlined />}>Đã từ chối</Tag>, width: 125 },
   ]
 
   return (
     <>
-      <PageTitle title="Duyệt thanh toán VietQR" subtitle="Đối soát giao dịch VietQR đang chờ và xác nhận đơn hàng" extra={<Button icon={<ReloadOutlined />} onClick={() => void bookings.load()}>Làm mới</Button>} />
+      <PageTitle title="Duyệt thanh toán VietQR" subtitle="Đối soát giao dịch đang chờ và lưu riêng các giao dịch bị từ chối" extra={<Button icon={<ReloadOutlined />} onClick={() => void reload()}>Làm mới</Button>} />
       <Card>
-        <Table
-          rowKey="id"
-          loading={bookings.loading}
-          dataSource={bookings.items}
-          columns={bookingColumns}
-          pagination={{
-            current: bookings.pagination.page,
-            pageSize: bookings.pagination.limit,
-            total: bookings.pagination.totalItems,
-            onChange: (page, limit) => void bookings.load({ page, limit }),
-          }}
+        <Tabs
+          items={[
+            {
+              key: 'pending',
+              label: <Space>Chờ duyệt <Badge count={pending.pagination.totalItems} showZero color="#d97706" /></Space>,
+              children: <Table rowKey="id" loading={pending.loading} dataSource={pending.items} columns={pendingColumns} scroll={{ x: 1200 }} pagination={{ current: pending.pagination.page, pageSize: pending.pagination.limit, total: pending.pagination.totalItems, showTotal: (total) => `Tổng ${total} giao dịch chờ duyệt`, onChange: (page, limit) => void pending.load({ page, limit }) }} />,
+            },
+            {
+              key: 'rejected',
+              label: <Space>Đơn từ chối <Badge count={rejected.pagination.totalItems} showZero color="#dc2626" /></Space>,
+              children: <Table rowKey="id" loading={rejected.loading} dataSource={rejected.items} columns={rejectedColumns} scroll={{ x: 1450 }} pagination={{ current: rejected.pagination.page, pageSize: rejected.pagination.limit, total: rejected.pagination.totalItems, showTotal: (total) => `Tổng ${total} giao dịch đã từ chối`, onChange: (page, limit) => void rejected.load({ page, limit }) }} />,
+            },
+          ]}
         />
       </Card>
-      <Modal title={selected ? `Giao dịch của ${selected.bookingCode}` : 'Giao dịch'} open={Boolean(selected)} width={780} onCancel={() => setSelected(null)} footer={null}>
-        {selected && (
-          <Descriptions className="mb-16" size="small" column={2} bordered>
-            <Descriptions.Item label="Khách">{selected.user?.fullName || selected.user?.email}</Descriptions.Item>
-            <Descriptions.Item label="Số tiền">{formatMoney(selected.finalAmount)}</Descriptions.Item>
-          </Descriptions>
-        )}
-        <Table rowKey="id" loading={loadingPayments} dataSource={payments} pagination={false} columns={paymentColumns} />
+
+      <Modal
+        title="Từ chối giao dịch VietQR"
+        open={Boolean(rejecting)}
+        onCancel={() => { if (!submitting) { setRejecting(null); setReason('') } }}
+        footer={<Space><Button disabled={submitting} onClick={() => { setRejecting(null); setReason('') }}>Hủy</Button><Button danger type="primary" loading={submitting} disabled={reason.trim().length < 5} onClick={() => void submitRejection()}>Xác nhận từ chối</Button></Space>}
+      >
+        <Alert type="warning" showIcon message={`Giao dịch ${rejecting?.booking?.bookingCode || ''} sẽ được chuyển sang mục Đơn từ chối.`} description="Khách hàng vẫn có thể tạo lại một giao dịch VietQR mới cho đơn này." />
+        <div className="payment-rejection-field"><Typography.Text strong>Lý do từ chối <Typography.Text type="danger">*</Typography.Text></Typography.Text><Input.TextArea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={500} showCount rows={4} placeholder="Ví dụ: Không tìm thấy giao dịch trên sao kê, số tiền chuyển khoản không chính xác..." /></div>
       </Modal>
     </>
   )

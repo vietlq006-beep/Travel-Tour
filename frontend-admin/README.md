@@ -20,5 +20,6 @@ VITE_API_BASE_URL=http://localhost:5000/api
 - Dashboard biểu đồ doanh thu, booking và top tour.
 - Quản lý danh mục và tour.
 - Mở chuyến khởi hành, phân công khách sạn, xe và hướng dẫn viên.
-- Duyệt thanh toán VietQR, xác nhận hoặc từ chối sau khi đối soát.
+- Quản lý khách hàng: tìm kiếm, lọc trạng thái, xem lịch sử đặt tour và khóa/mở tài khoản.
+- Duyệt thanh toán VietQR; giao dịch bị từ chối được chuyển sang mục riêng, lưu lý do, thời điểm và người xử lý.
 - Tải báo cáo booking Excel theo ngày và trạng thái.

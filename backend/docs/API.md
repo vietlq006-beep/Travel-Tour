@@ -319,6 +319,10 @@ Tài khoản VietQR mặc định:
 
 Trạng thái VietQR ban đầu là `PENDING`. Quản trị viên phải đối soát giao dịch ngân hàng trước khi cập nhật `SUCCESS`; việc hiển thị hoặc quét QR không tự xác nhận thanh toán.
 
+### `GET /payments?status=PENDING&paymentMethod=VIETQR&page=1&limit=10` (ADMIN)
+
+Danh sách giao dịch có phân trang để đối soát. Có thể lọc theo `status` và `paymentMethod`; mỗi giao dịch trả kèm thông tin đơn, khách hàng và tour. Trang quản trị dùng `status=PENDING` cho mục Chờ duyệt và `status=FAILED` cho mục Đơn từ chối.
+
 ### `GET /payments/booking/:bookingId`
 
 Lịch sử giao dịch của đơn. Khách chỉ xem đơn của mình.
@@ -332,6 +336,17 @@ Lịch sử giao dịch của đơn. Khách chỉ xem đơn của mình.
   "responseData": { "note": "Đã đối soát" }
 }
 ```
+
+Khi từ chối giao dịch, quản trị viên bắt buộc gửi lý do từ 5 đến 500 ký tự:
+
+```json
+{
+  "status": "FAILED",
+  "rejectionReason": "Không tìm thấy giao dịch tương ứng trên sao kê ngân hàng."
+}
+```
+
+API lưu lý do, thời điểm và người từ chối vào `responseData`. Giao dịch sẽ rời danh sách chờ duyệt và xuất hiện trong danh sách đơn từ chối; khách hàng vẫn có thể tạo một giao dịch VietQR mới cho đơn chưa thanh toán.
 
 Trạng thái và luồng hợp lệ:
 
@@ -356,7 +371,7 @@ Tạo đánh giá: `{ "bookingId": 25, "rating": 5, "comment": "Chuyến đi r�
 Base `/users`, chỉ `ADMIN`.
 
 - `GET /users?keyword=an&role=CUSTOMER&isActive=true&page=1&limit=10`
-- `GET /users/:id` trả hồ sơ cùng lịch sử đơn (không bao giờ trả hash mật khẩu).
+- `GET /users/:id` trả hồ sơ cùng tối đa 50 đơn gần nhất và thông tin tour (không bao giờ trả hash mật khẩu).
 - `PATCH /users/:id` nhận `{ "role": "ADMIN", "isActive": true }`.
 
 Admin không thể tự khóa tài khoản đang dùng.

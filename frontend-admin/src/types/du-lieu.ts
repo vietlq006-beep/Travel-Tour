@@ -26,6 +26,17 @@ export interface User {
   email: string
   phoneNumber?: string
   role: 'ADMIN' | 'CUSTOMER'
+  avatar?: string
+  isActive?: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface Customer extends User {
+  role: 'CUSTOMER'
+  isActive: boolean
+  createdAt: string
+  bookings?: Booking[]
 }
 
 export interface AdminSession {
@@ -122,6 +133,17 @@ export interface Payment {
   status: PaymentStatus
   paymentMethod: PaymentMethod
   transactionId?: string
+  createdAt?: string
+  updatedAt?: string
+  paymentTime?: string
+  booking?: Booking
+  responseData?: {
+    rejectionReason?: string
+    rejectedAt?: string
+    rejectedBy?: { id?: EntityId; fullName?: string; email?: string }
+    reason?: string
+    [key: string]: unknown
+  }
 }
 
 export interface DashboardSummary {

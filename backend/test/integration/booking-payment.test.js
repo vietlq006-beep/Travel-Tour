@@ -5,6 +5,7 @@ const { api, db, login, auth, closeDatabase } = require('../helpers');
 const marker = `FLOW-${Date.now()}`;
 let adminToken; let customerToken;
 let categoryId; let destinationId; let tourId; let departureId; let voucherId; let bookingId; let paymentId;
+let rejectedBookingId; let rejectedPaymentId;
 
 before(async () => {
   adminToken = await login();
@@ -28,6 +29,8 @@ before(async () => {
 });
 
 after(async () => {
+  if (rejectedPaymentId) await db.Payment.destroy({ where: { id: rejectedPaymentId } });
+  if (rejectedBookingId) await db.Booking.destroy({ where: { id: rejectedBookingId } });
   if (paymentId) await db.Payment.destroy({ where: { id: paymentId } });
   if (bookingId) await db.Booking.destroy({ where: { id: bookingId } });
   if (departureId) await db.TourDeparture.destroy({ where: { id: departureId }, force: true });
@@ -76,4 +79,40 @@ test('hoàn tiền rồi hủy đơn sẽ trả lại ghế và lượt voucher'
   await api.patch(`/api/bookings/${bookingId}/status`).set(auth(adminToken)).send({ status: 'CANCELLED' }).expect(200);
   assert.equal((await db.TourDeparture.findByPk(departureId)).bookedSeats, 0);
   assert.equal((await db.Voucher.findByPk(voucherId)).usedCount, 0);
+});
+
+test('giao dịch VietQR bị từ chối phải có lý do và xuất hiện trong danh sách riêng', async () => {
+  const bookingResponse = await api.post('/api/bookings').set(auth(customerToken)).send({
+    departureId, numAdults: 1, numChildren: 0,
+    participants: [
+      { fullName: 'Khách Bị Từ Chối', gender: 'MALE', dateOfBirth: '1992-02-02', passengerType: 'ADULT' }
+    ]
+  }).expect(201);
+  rejectedBookingId = bookingResponse.body.data.id;
+  const paymentResponse = await api.post('/api/payments').set(auth(customerToken)).send({
+    bookingId: rejectedBookingId,
+    paymentMethod: 'VIETQR'
+  }).expect(201);
+  rejectedPaymentId = paymentResponse.body.data.payment.id;
+
+  await api.patch(`/api/payments/${rejectedPaymentId}/status`).set(auth(adminToken)).send({ status: 'FAILED' }).expect(422);
+  const rejectionReason = 'Không tìm thấy giao dịch tương ứng trên sao kê ngân hàng.';
+  const rejected = await api.patch(`/api/payments/${rejectedPaymentId}/status`).set(auth(adminToken)).send({
+    status: 'FAILED',
+    rejectionReason
+  }).expect(200);
+  assert.equal(rejected.body.data.responseData.rejectionReason, rejectionReason);
+  assert.ok(rejected.body.data.responseData.rejectedAt);
+
+  const rejectedList = await api.get('/api/payments').set(auth(adminToken)).query({
+    status: 'FAILED', paymentMethod: 'VIETQR', page: 1, limit: 100
+  }).expect(200);
+  const listedPayment = rejectedList.body.data.items.find((item) => item.id === rejectedPaymentId);
+  assert.equal(listedPayment.responseData.rejectionReason, rejectionReason);
+  assert.equal(listedPayment.booking.departure.tour.id, tourId);
+
+  const pendingList = await api.get('/api/payments').set(auth(adminToken)).query({
+    status: 'PENDING', paymentMethod: 'VIETQR', page: 1, limit: 100
+  }).expect(200);
+  assert.equal(pendingList.body.data.items.some((item) => item.id === rejectedPaymentId), false);
 });

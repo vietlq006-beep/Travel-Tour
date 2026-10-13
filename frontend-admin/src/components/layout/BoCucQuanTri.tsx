@@ -7,6 +7,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   TagOutlined,
+  TeamOutlined,
 } from '@ant-design/icons'
 import { Button, Grid, Layout, Menu, Space, Typography, type MenuProps } from 'antd'
 import { useState } from 'react'
@@ -19,6 +20,7 @@ const NAV_ITEMS: MenuProps['items'] = [
   { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
   { key: '/catalog', icon: <TagOutlined />, label: 'Danh mục & tour' },
   { key: '/departures', icon: <CalendarOutlined />, label: 'Khởi hành & điều phối' },
+  { key: '/customers', icon: <TeamOutlined />, label: 'Quản lý khách hàng' },
   { key: '/payments', icon: <BankOutlined />, label: 'Duyệt VietQR' },
   { key: '/reports', icon: <FileExcelOutlined />, label: 'Báo cáo Excel' },
 ]

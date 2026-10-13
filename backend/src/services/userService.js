@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { User, Booking } = require('../models');
+const { User, Booking, TourDeparture, Tour } = require('../models');
 const AppError = require('../utils/appError');
 const { getPagination, toPaginatedResult } = require('../utils/pagination');
 class UserService {
@@ -16,7 +16,23 @@ class UserService {
     return toPaginatedResult(await User.findAndCountAll({ where, attributes: { exclude: ['password'] }, limit, offset, order: [['createdAt', 'DESC']] }), page, limit);
   }
   async get(id) {
-    const user = await User.findByPk(id, { attributes: { exclude: ['password'] }, include: [{ model: Booking, as: 'bookings', attributes: ['id', 'bookingCode', 'status', 'finalAmount', 'bookingDate'] }] });
+    const user = await User.findByPk(id, {
+      attributes: { exclude: ['password'] },
+      include: [{
+        model: Booking,
+        as: 'bookings',
+        attributes: ['id', 'bookingCode', 'status', 'finalAmount', 'bookingDate'],
+        include: [{
+          model: TourDeparture,
+          as: 'departure',
+          attributes: ['id'],
+          include: [{ model: Tour, as: 'tour', attributes: ['id', 'code', 'name'] }]
+        }],
+        separate: true,
+        limit: 50,
+        order: [['bookingDate', 'DESC']]
+      }]
+    });
     if (!user) throw new AppError('Không tìm thấy người dùng.', 404);
     return user;
   }
