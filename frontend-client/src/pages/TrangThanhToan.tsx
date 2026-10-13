@@ -7,6 +7,7 @@ import { VietQrDialog } from '../components/ThanhToanVietQr'
 import type { ApiEnvelope, Booking, Gender, Participant, PassengerType, PaymentCreation, Tour, VietQrDetails, VoucherValidation } from '../types/du-lieu'
 
 const TODAY = new Date().toISOString().slice(0, 10)
+const PASSENGER_LABELS: Record<PassengerType, string> = { ADULT: 'Người lớn', CHILD: 'Trẻ em', INFANT: 'Em bé', SENIOR: 'Người cao tuổi' }
 
 function emptyPerson(passengerType: PassengerType): Participant {
   return { fullName: '', gender: 'MALE', dateOfBirth: '', passengerType }
@@ -29,7 +30,7 @@ function Counter({ value, min, max, onChange }: CounterProps) {
   )
 }
 
-interface PeopleCounts { adults: number; children: number }
+interface PeopleCounts { adults: number; children: number; infants: number; seniors: number }
 type EditableParticipantField = 'fullName' | 'gender' | 'dateOfBirth'
 
 export default function CheckoutPage() {
@@ -38,7 +39,8 @@ export default function CheckoutPage() {
   const navigate = useNavigate()
   const [tour, setTour] = useState<Tour | null>(null)
   const [departureId, setDepartureId] = useState(searchParams.get('departure') || '')
-  const [counts, setCounts] = useState<PeopleCounts>({ adults: 1, children: 0 })
+  const [counts, setCounts] = useState<PeopleCounts>({ adults: 1, children: 0, infants: 0, seniors: 0 })
+  const [singleRoomCount, setSingleRoomCount] = useState(0)
   const [participants, setParticipants] = useState<Participant[]>([emptyPerson('ADULT')])
   const [voucherCode, setVoucherCode] = useState('')
   const [voucher, setVoucher] = useState<VoucherValidation | null>(null)
@@ -49,6 +51,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState('')
   const [vietQr, setVietQr] = useState<VietQrDetails | null>(null)
   const [createdBookingCode, setCreatedBookingCode] = useState('')
+  const [paymentDueAt, setPaymentDueAt] = useState<string | null>(null)
 
   useEffect(() => {
     api.get<ApiEnvelope<Tour>>(`/tours/${tourId}`)
@@ -63,18 +66,26 @@ export default function CheckoutPage() {
 
   const selected = tour?.departures?.find((item) => String(item.id) === String(departureId))
   const subtotal = selected
-    ? Number(selected.adultPrice) * counts.adults + Number(selected.childPrice) * counts.children
+    ? Number(selected.adultPrice) * counts.adults
+      + Number(selected.childPrice) * counts.children
+      + Number(selected.infantPrice || 0) * counts.infants
+      + Number(selected.seniorPrice ?? selected.adultPrice) * counts.seniors
+      + Number(selected.singleRoomSurcharge || 0) * singleRoomCount
     : 0
   const finalAmount = Math.max(0, subtotal - Number(voucher?.discountAmount || 0))
-  const totalPeople = counts.adults + counts.children
+  const totalPeople = counts.adults + counts.children + counts.infants + counts.seniors
 
   const syncPeople = (nextCounts: PeopleCounts) => {
     const adults = participants.filter((person) => person.passengerType === 'ADULT')
     const children = participants.filter((person) => person.passengerType === 'CHILD')
+    const infants = participants.filter((person) => person.passengerType === 'INFANT')
+    const seniors = participants.filter((person) => person.passengerType === 'SENIOR')
     const nextAdults = Array.from({ length: nextCounts.adults }, (_, index) => adults[index] || emptyPerson('ADULT'))
     const nextChildren = Array.from({ length: nextCounts.children }, (_, index) => children[index] || emptyPerson('CHILD'))
     setCounts(nextCounts)
-    setParticipants([...nextAdults, ...nextChildren])
+    const nextInfants = Array.from({ length: nextCounts.infants }, (_, index) => infants[index] || emptyPerson('INFANT'))
+    const nextSeniors = Array.from({ length: nextCounts.seniors }, (_, index) => seniors[index] || emptyPerson('SENIOR'))
+    setParticipants([...nextAdults, ...nextChildren, ...nextInfants, ...nextSeniors])
     setVoucher(null)
   }
 
@@ -123,6 +134,9 @@ export default function CheckoutPage() {
         voucherCode: voucherCode.trim() || undefined,
         numAdults: counts.adults,
         numChildren: counts.children,
+        numInfants: counts.infants,
+        numSeniors: counts.seniors,
+        singleRoomCount,
         participants,
         notes: notes.trim() || undefined,
       }))
@@ -132,6 +146,7 @@ export default function CheckoutPage() {
       }))
       if (!payment.vietQr) throw new Error('VIETQR_DATA_MISSING')
       setCreatedBookingCode(booking.bookingCode)
+      setPaymentDueAt(booking.paymentDueAt || null)
       setVietQr(payment.vietQr)
     } catch (requestError) {
       if (booking) navigate(`/my-bookings?created=${encodeURIComponent(booking.bookingCode)}`, { replace: true })
@@ -145,9 +160,7 @@ export default function CheckoutPage() {
   const participantRows = useMemo(() => participants.map((person, index) => ({
     ...person,
     index,
-    label: person.passengerType === 'ADULT'
-      ? `Người lớn ${participants.slice(0, index + 1).filter((item) => item.passengerType === 'ADULT').length}`
-      : `Trẻ em ${participants.slice(0, index + 1).filter((item) => item.passengerType === 'CHILD').length}`,
+    label: `${PASSENGER_LABELS[person.passengerType]} ${participants.slice(0, index + 1).filter((item) => item.passengerType === person.passengerType).length}`,
   })), [participants])
 
   if (loading) return <div className="min-h-[70vh] animate-pulse bg-slate-100" />
@@ -178,8 +191,11 @@ export default function CheckoutPage() {
             <section className="surface-card rounded-3xl p-5 sm:p-7">
               <h2 className="flex items-center gap-3 text-lg font-black"><UserRound className="text-brand-600" /> Số lượng khách</h2>
               <div className="mt-5 divide-y divide-slate-100">
-                <div className="flex items-center justify-between py-4"><div><p className="font-bold">Người lớn</p><p className="text-sm text-slate-400">Từ 12 tuổi</p></div><Counter value={counts.adults} min={1} max={Math.max(1, maxPeople - counts.children)} onChange={(value) => syncPeople({ ...counts, adults: value })} /></div>
-                <div className="flex items-center justify-between py-4"><div><p className="font-bold">Trẻ em</p><p className="text-sm text-slate-400">Dưới 12 tuổi</p></div><Counter value={counts.children} min={0} max={Math.max(0, maxPeople - counts.adults)} onChange={(value) => syncPeople({ ...counts, children: value })} /></div>
+                <div className="flex items-center justify-between py-4"><div><p className="font-bold">Người lớn</p><p className="text-sm text-slate-400">Từ 12 đến 59 tuổi</p></div><Counter value={counts.adults} min={1} max={Math.max(1, maxPeople - totalPeople + counts.adults)} onChange={(value) => syncPeople({ ...counts, adults: value })} /></div>
+                <div className="flex items-center justify-between py-4"><div><p className="font-bold">Trẻ em</p><p className="text-sm text-slate-400">Theo chính sách của tour</p></div><Counter value={counts.children} min={0} max={Math.max(0, maxPeople - totalPeople + counts.children)} onChange={(value) => syncPeople({ ...counts, children: value })} /></div>
+                <div className="flex items-center justify-between py-4"><div><p className="font-bold">Em bé</p><p className="text-sm text-slate-400">Theo chính sách của tour</p></div><Counter value={counts.infants} min={0} max={Math.max(0, maxPeople - totalPeople + counts.infants)} onChange={(value) => syncPeople({ ...counts, infants: value })} /></div>
+                <div className="flex items-center justify-between py-4"><div><p className="font-bold">Người cao tuổi</p><p className="text-sm text-slate-400">Giá và điều kiện riêng</p></div><Counter value={counts.seniors} min={0} max={Math.max(0, maxPeople - totalPeople + counts.seniors)} onChange={(value) => syncPeople({ ...counts, seniors: value })} /></div>
+                <div className="flex items-center justify-between py-4"><div><p className="font-bold">Phụ thu phòng đơn</p><p className="text-sm text-slate-400">{formatMoney(selected?.singleRoomSurcharge || 0)} / phòng</p></div><Counter value={singleRoomCount} min={0} max={counts.adults + counts.seniors} onChange={(value) => { setSingleRoomCount(value); setVoucher(null) }} /></div>
               </div>
             </section>
 
@@ -209,6 +225,9 @@ export default function CheckoutPage() {
               <div className="mt-5 space-y-3 border-t border-slate-100 pt-5 text-sm">
                 <div className="flex justify-between"><span>{counts.adults} người lớn</span><span>{formatMoney(Number(selected?.adultPrice || 0) * counts.adults)}</span></div>
                 {counts.children > 0 && <div className="flex justify-between"><span>{counts.children} trẻ em</span><span>{formatMoney(Number(selected?.childPrice || 0) * counts.children)}</span></div>}
+                {counts.infants > 0 && <div className="flex justify-between"><span>{counts.infants} em bé</span><span>{formatMoney(Number(selected?.infantPrice || 0) * counts.infants)}</span></div>}
+                {counts.seniors > 0 && <div className="flex justify-between"><span>{counts.seniors} người cao tuổi</span><span>{formatMoney(Number(selected?.seniorPrice ?? selected?.adultPrice ?? 0) * counts.seniors)}</span></div>}
+                {singleRoomCount > 0 && <div className="flex justify-between"><span>{singleRoomCount} phòng đơn</span><span>{formatMoney(Number(selected?.singleRoomSurcharge || 0) * singleRoomCount)}</span></div>}
                 <div className="flex justify-between border-t border-slate-100 pt-3 font-bold"><span>Tạm tính</span><span>{formatMoney(subtotal)}</span></div>
               </div>
               <div className="mt-5">
@@ -223,7 +242,7 @@ export default function CheckoutPage() {
           </aside>
         </div>
       </form>
-      <VietQrDialog payment={vietQr} onClose={() => navigate(`/my-bookings?created=${encodeURIComponent(createdBookingCode)}`, { replace: true })} />
+      <VietQrDialog payment={vietQr} dueAt={paymentDueAt} onClose={() => navigate(`/my-bookings?created=${encodeURIComponent(createdBookingCode)}`, { replace: true })} />
     </section>
   )
 }

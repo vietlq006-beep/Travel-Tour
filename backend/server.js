@@ -3,12 +3,15 @@ const app = require('./src/app');
 const { testConnection } = require('./src/config/database');
 const { validateEnvironment } = require('./src/config/environment');
 const db = require('./src/models');
+const { startBookingExpiryJob } = require('./src/jobs/bookingExpiryJob');
 
 const PORT = Number(process.env.PORT) || 5000;
 let server;
+let stopBookingExpiryJob;
 
 const shutdown = async (signal) => {
   console.log(`[Server] Nhận ${signal}, đang dừng an toàn...`);
+  if (stopBookingExpiryJob) stopBookingExpiryJob();
   if (server) await new Promise((resolve) => server.close(resolve));
   await db.sequelize.close();
   process.exit(0);
@@ -22,6 +25,7 @@ const startServer = async () => {
     server = app.listen(PORT, () => {
       console.log(`[Server] LeViet Travel API đang lắng nghe tại http://localhost:${PORT}`);
     });
+    stopBookingExpiryJob = startBookingExpiryJob();
   } catch (error) {
     console.error('[Server] Không thể khởi động:', error.message);
     process.exit(1);

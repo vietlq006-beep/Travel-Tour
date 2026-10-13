@@ -12,6 +12,11 @@ const validateDeparture = (req) => {
   if ((required || body.capacity !== undefined) && !isPositiveInteger(body.capacity)) errors.push({ field: 'capacity', message: 'Sức chứa phải là số nguyên dương' });
   if ((required || body.adultPrice !== undefined) && !isPositiveNumber(body.adultPrice)) errors.push({ field: 'adultPrice', message: 'Giá người lớn phải lớn hơn 0' });
   if ((required || body.childPrice !== undefined) && (!Number.isFinite(Number(body.childPrice)) || Number(body.childPrice) < 0)) errors.push({ field: 'childPrice', message: 'Giá trẻ em không được âm' });
+  ['infantPrice', 'seniorPrice', 'singleRoomSurcharge'].forEach((field) => {
+    if (body[field] !== undefined && body[field] !== null && body[field] !== ''
+      && (!Number.isFinite(Number(body[field])) || Number(body[field]) < 0)) errors.push({ field, message: `${field} không được âm` });
+  });
+  if (body.meetingTime && Number.isNaN(new Date(body.meetingTime).getTime())) errors.push({ field: 'meetingTime', message: 'Giờ tập trung không hợp lệ' });
   ['hotelId', 'vehicleId', 'guideId'].forEach((field) => {
     if (body[field] !== undefined && body[field] !== null && body[field] !== '' && !isPositiveInteger(body[field])) errors.push({ field, message: `${field} không hợp lệ` });
   });

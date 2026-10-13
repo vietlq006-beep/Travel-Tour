@@ -27,7 +27,7 @@ const BookingParticipant = sequelize.define('BookingParticipant', {
     field: 'date_of_birth'
   },
   passengerType: {
-    type: DataTypes.ENUM('ADULT', 'CHILD'),
+    type: DataTypes.ENUM('ADULT', 'CHILD', 'INFANT', 'SENIOR'),
     allowNull: false,
     field: 'passenger_type'
   }

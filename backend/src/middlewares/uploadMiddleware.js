@@ -27,6 +27,25 @@ const uploadImage = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
+const statementMimeTypes = new Set([
+  'text/csv',
+  'application/csv',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+]);
+
+const uploadStatement = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, callback) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+    if (!statementMimeTypes.has(file.mimetype) && !['.csv', '.xlsx'].includes(extension)) {
+      return callback(new AppError('Chỉ chấp nhận sao kê CSV hoặc XLSX.', 422));
+    }
+    callback(null, true);
+  }
+}).single('statement');
+
 const toUploadUrl = (file) => (file ? `/uploads/${file.filename}` : null);
 
-module.exports = { uploadImage, toUploadUrl };
+module.exports = { uploadImage, uploadStatement, toUploadUrl };

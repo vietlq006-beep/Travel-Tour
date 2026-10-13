@@ -38,6 +38,7 @@ export default function Layout() {
     <>
       <NavLink to="/" className={navClass} onClick={() => { setMobileOpen(false); setAccountOpen(false) }}>Trang chủ</NavLink>
       <NavLink to="/tours" className={navClass} onClick={() => { setMobileOpen(false); setAccountOpen(false) }}>Tour du lịch</NavLink>
+      <NavLink to="/saved-tours" className={navClass} onClick={() => { setMobileOpen(false); setAccountOpen(false) }}>Tour đã lưu</NavLink>
       {user && <NavLink to="/my-bookings" className={navClass} onClick={() => { setMobileOpen(false); setAccountOpen(false) }}>Đơn của tôi</NavLink>}
     </>
   )
@@ -68,6 +69,7 @@ export default function Layout() {
                   <div className="animate-fade-in absolute right-0 top-14 w-60 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-emerald-950/10">
                     <div className="border-b border-slate-100 px-3 py-2.5"><p className="truncate text-sm font-extrabold">{user.fullName}</p><p className="mt-0.5 truncate text-xs text-slate-400">{user.email}</p></div>
                     <Link to="/my-bookings" className="mt-1 flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-brand-50 hover:text-brand-700"><ReceiptText size={16} /> Đơn của tôi</Link>
+                    <Link to="/profile" onClick={() => setAccountOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-brand-50 hover:text-brand-700"><UserRound size={16} /> Hồ sơ & bảo mật</Link>
                     <button type="button" onClick={signOut} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-50"><LogOut size={16} /> Đăng xuất</button>
                   </div>
                 )}

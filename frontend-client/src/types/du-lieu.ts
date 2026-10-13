@@ -24,6 +24,9 @@ export interface User {
   email: string
   phoneNumber?: string
   role: 'ADMIN' | 'CUSTOMER'
+  avatar?: string
+  emailVerifiedAt?: string | null
+  phoneVerifiedAt?: string | null
 }
 
 export interface AuthState {
@@ -45,6 +48,7 @@ export interface AuthContextValue extends AuthState {
   login: (credentials: LoginCredentials) => Promise<AuthState>
   register: (form: RegisterForm) => Promise<AuthState>
   logout: () => void
+  refresh: () => Promise<User>
 }
 
 export interface Destination {
@@ -64,6 +68,13 @@ export interface Departure {
   endDate: string
   adultPrice: number
   childPrice: number
+  infantPrice: number
+  seniorPrice?: number | null
+  singleRoomSurcharge: number
+  departureCity?: string
+  meetingPoint?: string
+  meetingTime?: string
+  termsOverride?: string
   capacity: number
   bookedSeats: number
   remainingSeats: number
@@ -86,6 +97,21 @@ export interface Tour {
   images?: string[]
   videoUrl?: string
   overview?: string
+  includedServices?: string
+  excludedServices?: string
+  cancellationPolicy?: string
+  changePolicy?: string
+  depositPercent?: number
+  childPolicy?: string
+  infantPolicy?: string
+  seniorPolicy?: string
+  pickupPoints?: string[]
+  meetingInstructions?: string
+  luggagePolicy?: string
+  insuranceDetails?: string
+  visaRequirements?: string
+  requiredDocuments?: string
+  termsAndConditions?: string
   durationDays: number
   durationNights: number
   category?: Category
@@ -93,11 +119,12 @@ export interface Tour {
   departures?: Departure[]
   itineraries?: Itinerary[]
   rating?: { average: number; count: number }
+  reviews?: Review[]
 }
 
 export type BookingStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
 export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED'
-export type PassengerType = 'ADULT' | 'CHILD'
+export type PassengerType = 'ADULT' | 'CHILD' | 'INFANT' | 'SENIOR'
 export type Gender = 'MALE' | 'FEMALE' | 'OTHER'
 
 export interface Participant {
@@ -113,6 +140,9 @@ export interface Payment {
   amount: number
   paymentMethod: 'VIETQR' | 'BANK_TRANSFER' | 'CASH'
   status: PaymentStatus
+  paymentPurpose?: 'DEPOSIT' | 'BALANCE' | 'FULL'
+  proofUrl?: string | null
+  proofUploadedAt?: string | null
 }
 
 export interface Booking {
@@ -121,11 +151,62 @@ export interface Booking {
   bookingDate: string
   numAdults: number
   numChildren: number
+  numInfants: number
+  numSeniors: number
+  singleRoomCount: number
+  depositAmount: number
   finalAmount: number
   status: BookingStatus
+  paymentDueAt?: string | null
+  expiredAt?: string | null
+  cancellationReason?: string | null
+  pricingSnapshot?: Record<string, unknown>
+  policySnapshot?: Record<string, unknown>
+  checkInCode?: string
+  checkedInAt?: string | null
   departure?: Departure
   participants?: Participant[]
   payments?: Payment[]
+  review?: Review | null
+  activities?: BookingActivity[]
+  changeRequests?: BookingChangeRequest[]
+}
+
+export interface Review {
+  id: EntityId
+  bookingId?: EntityId
+  rating: number
+  comment?: string
+  createdAt?: string
+  user?: Pick<User, 'id' | 'fullName' | 'avatar'>
+}
+
+export interface BookingActivity {
+  id: EntityId
+  eventType: string
+  fromStatus?: string | null
+  toStatus?: string | null
+  note?: string | null
+  createdAt: string
+  actor?: Pick<User, 'id' | 'fullName' | 'email'>
+}
+
+export interface BookingChangeRequest {
+  id: EntityId
+  requestType: 'CANCEL' | 'RESCHEDULE' | 'REFUND'
+  reason: string
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  adminNote?: string | null
+  requestedDepartureId?: EntityId | null
+  requestedDeparture?: Departure | null
+  createdAt?: string
+}
+
+export interface CheckInTicket {
+  bookingCode: string
+  checkInCode: string
+  checkedInAt?: string | null
+  qrCodeDataUrl: string
 }
 
 export interface VoucherValidation {

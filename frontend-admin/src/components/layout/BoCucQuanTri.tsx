@@ -1,5 +1,6 @@
 import {
   BankOutlined,
+  BookOutlined,
   CalendarOutlined,
   DashboardOutlined,
   FileExcelOutlined,
@@ -7,6 +8,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   TagOutlined,
+  ToolOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
 import { Button, Grid, Layout, Menu, Space, Typography, type MenuProps } from 'antd'
@@ -19,8 +21,10 @@ const { Header, Content, Sider } = Layout
 const NAV_ITEMS: MenuProps['items'] = [
   { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
   { key: '/catalog', icon: <TagOutlined />, label: 'Danh mục & tour' },
+  { key: '/resources', icon: <ToolOutlined />, label: 'Tài nguyên vận hành' },
   { key: '/departures', icon: <CalendarOutlined />, label: 'Khởi hành & điều phối' },
   { key: '/customers', icon: <TeamOutlined />, label: 'Quản lý khách hàng' },
+  { key: '/bookings', icon: <BookOutlined />, label: 'Điều hành booking' },
   { key: '/payments', icon: <BankOutlined />, label: 'Duyệt VietQR' },
   { key: '/reports', icon: <FileExcelOutlined />, label: 'Báo cáo Excel' },
 ]

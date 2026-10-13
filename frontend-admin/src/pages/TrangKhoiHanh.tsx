@@ -1,5 +1,5 @@
 import { CarOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { App as AntApp, Button, Card, Col, DatePicker, Drawer, Form, InputNumber, Row, Select, Table } from 'antd'
+import { App as AntApp, Button, Card, Col, DatePicker, Drawer, Form, Input, InputNumber, Row, Select, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState } from 'react'
@@ -18,6 +18,13 @@ interface DepartureFormValues {
   capacity: number
   adultPrice: number
   childPrice: number
+  infantPrice?: number
+  seniorPrice?: number
+  singleRoomSurcharge?: number
+  departureCity?: string
+  meetingPoint?: string
+  meetingTime?: Dayjs
+  termsOverride?: string
   hotelId?: EntityId
   vehicleId?: EntityId
   guideId?: EntityId
@@ -40,6 +47,7 @@ export function DeparturesPage() {
       ...values,
       startDate: values.startDate.format('YYYY-MM-DD'),
       endDate: values.endDate.format('YYYY-MM-DD'),
+      meetingTime: values.meetingTime?.toISOString(),
     }
     try {
       if (editing) await api.put(`/departures/${editing.id}`, payload)
@@ -67,6 +75,8 @@ export function DeparturesPage() {
       ...record,
       startDate: dayjs(record.startDate),
       endDate: dayjs(record.endDate),
+      meetingTime: record.meetingTime ? dayjs(record.meetingTime) : undefined,
+      seniorPrice: record.seniorPrice ?? undefined,
     })
     setOpen(true)
   }
@@ -112,6 +122,10 @@ export function DeparturesPage() {
             <Col xs={12}><Form.Item name="startDate" label="Ngày đi" rules={[{ required: true }]}><DatePicker className="w-full" /></Form.Item></Col>
             <Col xs={12}><Form.Item name="endDate" label="Ngày về" rules={[{ required: true }]}><DatePicker className="w-full" /></Form.Item></Col>
           </Row>
+          <Row gutter={12}><Col xs={8}><Form.Item name="infantPrice" label="Giá em bé"><InputNumber min={0} className="w-full" /></Form.Item></Col><Col xs={8}><Form.Item name="seniorPrice" label="Giá cao tuổi"><InputNumber min={0} className="w-full" /></Form.Item></Col><Col xs={8}><Form.Item name="singleRoomSurcharge" label="Phụ thu phòng đơn"><InputNumber min={0} className="w-full" /></Form.Item></Col></Row>
+          <Row gutter={12}><Col xs={12}><Form.Item name="departureCity" label="Nơi khởi hành"><Input /></Form.Item></Col><Col xs={12}><Form.Item name="meetingPoint" label="Điểm tập trung"><Input /></Form.Item></Col></Row>
+          <Form.Item name="meetingTime" label="Giờ tập trung"><DatePicker showTime className="w-full" /></Form.Item>
+          <Form.Item name="termsOverride" label="Điều khoản riêng cho đợt khởi hành"><Input.TextArea rows={4} /></Form.Item>
           <Row gutter={12}>
             <Col xs={8}><Form.Item name="capacity" label="Sức chứa" rules={[{ required: true }]}><InputNumber min={1} className="w-full" /></Form.Item></Col>
             <Col xs={8}><Form.Item name="adultPrice" label="Giá người lớn" rules={[{ required: true }]}><InputNumber min={1} className="w-full" /></Form.Item></Col>

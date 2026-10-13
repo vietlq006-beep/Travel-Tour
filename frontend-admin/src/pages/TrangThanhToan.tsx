@@ -1,8 +1,8 @@
-import { CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons'
+import { CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined, UploadOutlined } from '@ant-design/icons'
 import { Alert, App as AntApp, Badge, Button, Card, Input, Modal, Space, Table, Tabs, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import { useState } from 'react'
+import { useState, type ChangeEvent } from 'react'
 import { api } from '../api/may-khach-api'
 import { PageTitle } from '../components/common/TieuDeTrang'
 import { StatusTag } from '../components/common/TheTrangThai'
@@ -24,8 +24,28 @@ export function PaymentsPage() {
   const [rejecting, setRejecting] = useState<Payment | null>(null)
   const [reason, setReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   const reload = () => Promise.all([pending.load(), rejected.load()])
+
+  const importStatement = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setImporting(true)
+    const form = new FormData()
+    form.append('statement', file)
+    try {
+      const response = await api.post('/payments/reconciliation/import', form)
+      const result = (response.data as { data?: { matched?: number; duplicate?: number; unmatched?: number; failed?: number } }).data || {}
+      void message.success(`Đối soát xong: khớp ${result.matched || 0}, trùng ${result.duplicate || 0}, chưa khớp ${result.unmatched || 0}, lỗi ${result.failed || 0}`)
+      await reload()
+    } catch (error) {
+      void message.error(getErrorMessage(error))
+    } finally {
+      setImporting(false)
+      event.target.value = ''
+    }
+  }
 
   const approve = (payment: Payment) => {
     const bookingCode = payment.booking?.bookingCode || `#${payment.id}`
@@ -84,6 +104,7 @@ export function PaymentsPage() {
     { title: 'Tour', render: (_, record) => record.booking?.departure?.tour?.name || '-', minWidth: 240 },
     { title: 'Ngày đặt', render: (_, record) => formatDate(record.booking?.bookingDate), width: 120 },
     { title: 'Số tiền', dataIndex: 'amount', render: (value: number) => <Typography.Text strong>{formatMoney(value)}</Typography.Text>, width: 155 },
+    { title: 'Chứng từ', render: (_, record) => record.proofUrl ? <a href={`${api.defaults.baseURL?.replace(/\/api\/?$/, '')}${record.proofUrl}`} target="_blank" rel="noreferrer">Xem ảnh</a> : '-', width: 100 },
   ]
 
   const pendingColumns: ColumnsType<Payment> = [
@@ -107,7 +128,7 @@ export function PaymentsPage() {
 
   return (
     <>
-      <PageTitle title="Duyệt thanh toán VietQR" subtitle="Đối soát giao dịch đang chờ và lưu riêng các giao dịch bị từ chối" extra={<Button icon={<ReloadOutlined />} onClick={() => void reload()}>Làm mới</Button>} />
+      <PageTitle title="Duyệt thanh toán VietQR" subtitle="Đối soát giao dịch đang chờ và lưu riêng các giao dịch bị từ chối" extra={<Space><label className="ant-btn ant-btn-default"><UploadOutlined /> {importing ? 'Đang đối soát...' : 'Import sao kê'}<input type="file" accept=".csv,.xlsx" hidden disabled={importing} onChange={(event) => void importStatement(event)} /></label><Button icon={<ReloadOutlined />} onClick={() => void reload()}>Làm mới</Button></Space>} />
       <Card>
         <Tabs
           items={[

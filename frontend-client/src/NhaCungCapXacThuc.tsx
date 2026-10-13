@@ -44,6 +44,12 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         localStorage.removeItem(STORAGE_KEY)
         setAuth(EMPTY_AUTH)
       },
+      refresh: async () => {
+        const result = dataOf<{ user: AuthState['user'] }>(await api.get<ApiEnvelope<{ user: AuthState['user'] }>>('/auth/me'))
+        if (!result.user) throw new Error('Không tìm thấy tài khoản.')
+        persist({ ...auth, user: result.user })
+        return result.user
+      },
     }
   }, [auth])
 

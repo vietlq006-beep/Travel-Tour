@@ -2,7 +2,7 @@ const service = require('../services/departureService');
 const ApiResponse = require('../utils/apiResponse');
 const normalize = (body) => {
   const data = { ...body };
-  ['tourId', 'capacity', 'hotelId', 'vehicleId', 'guideId', 'adultPrice', 'childPrice'].forEach((field) => {
+  ['tourId', 'capacity', 'hotelId', 'vehicleId', 'guideId', 'adultPrice', 'childPrice', 'infantPrice', 'seniorPrice', 'singleRoomSurcharge'].forEach((field) => {
     if (data[field] === '') data[field] = null;
     else if (data[field] !== undefined && data[field] !== null) data[field] = Number(data[field]);
   });

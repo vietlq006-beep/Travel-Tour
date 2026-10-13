@@ -2,9 +2,11 @@ import { CheckCircle2, Copy, ExternalLink, QrCode, X } from 'lucide-react'
 import { useState } from 'react'
 import { formatMoney } from '../dich-vu-api'
 import type { VietQrDetails } from '../types/du-lieu'
+import { PaymentCountdown } from './DemNguocThanhToan'
 
 interface VietQrDialogProps {
   payment: VietQrDetails | null
+  dueAt?: string | null
   onClose: () => void
 }
 
@@ -23,7 +25,7 @@ function CopyButton({ label, value, copied, onCopy }: CopyButtonProps) {
   )
 }
 
-export function VietQrDialog({ payment, onClose }: VietQrDialogProps) {
+export function VietQrDialog({ payment, dueAt, onClose }: VietQrDialogProps) {
   const [copied, setCopied] = useState('')
   if (!payment) return null
 
@@ -55,6 +57,7 @@ export function VietQrDialog({ payment, onClose }: VietQrDialogProps) {
           </div>
 
           <div>
+            {dueAt && <div className="mb-4"><PaymentCountdown dueAt={dueAt} /></div>}
             <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
               Mở ứng dụng ngân hàng, chọn quét QR và kiểm tra đúng người nhận <strong>Lê Quốc Việt</strong>. Đơn sẽ được xác nhận sau khi quản trị viên đối soát giao dịch.
             </div>

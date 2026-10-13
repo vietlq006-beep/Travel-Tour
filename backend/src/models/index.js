@@ -15,6 +15,10 @@ const Booking = require('./Booking');
 const BookingParticipant = require('./BookingParticipant');
 const Payment = require('./Payment');
 const Review = require('./Review');
+const BookingActivity = require('./BookingActivity');
+const BookingChangeRequest = require('./BookingChangeRequest');
+const PaymentReconciliationEvent = require('./PaymentReconciliationEvent');
+const UserVerificationToken = require('./UserVerificationToken');
 
 // ==========================================
 // 1. QUAN HỆ DANH MỤC & TOUR (1 - N)
@@ -104,6 +108,24 @@ Review.belongsTo(Tour, { foreignKey: 'tourId', as: 'tour' });
 Booking.hasOne(Review, { foreignKey: 'bookingId', as: 'review' });
 Review.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
 
+Booking.hasMany(BookingActivity, { foreignKey: 'bookingId', as: 'activities' });
+BookingActivity.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
+User.hasMany(BookingActivity, { foreignKey: 'actorId', as: 'bookingActivities' });
+BookingActivity.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
+
+Booking.hasMany(BookingChangeRequest, { foreignKey: 'bookingId', as: 'changeRequests' });
+BookingChangeRequest.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
+User.hasMany(BookingChangeRequest, { foreignKey: 'userId', as: 'changeRequests' });
+BookingChangeRequest.belongsTo(User, { foreignKey: 'userId', as: 'requester' });
+TourDeparture.hasMany(BookingChangeRequest, { foreignKey: 'requestedDepartureId', as: 'changeRequests' });
+BookingChangeRequest.belongsTo(TourDeparture, { foreignKey: 'requestedDepartureId', as: 'requestedDeparture' });
+
+Payment.hasMany(PaymentReconciliationEvent, { foreignKey: 'paymentId', as: 'reconciliationEvents' });
+PaymentReconciliationEvent.belongsTo(Payment, { foreignKey: 'paymentId', as: 'payment' });
+
+User.hasMany(UserVerificationToken, { foreignKey: 'userId', as: 'verificationTokens' });
+UserVerificationToken.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 module.exports = {
   sequelize,
   User,
@@ -120,5 +142,9 @@ module.exports = {
   Booking,
   BookingParticipant,
   Payment,
-  Review
+  Review,
+  BookingActivity,
+  BookingChangeRequest,
+  PaymentReconciliationEvent,
+  UserVerificationToken
 };

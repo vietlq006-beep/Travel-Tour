@@ -10,6 +10,9 @@ const CheckoutPage = lazy(() => import('./pages/TrangThanhToan'))
 const HomePage = lazy(() => import('./pages/TrangChu'))
 const TourDetailPage = lazy(() => import('./pages/TrangChiTietTour'))
 const ToursPage = lazy(() => import('./pages/TrangDanhSachTour'))
+const ProfilePage = lazy(() => import('./pages/TrangHoSo'))
+const PasswordRecoveryPage = lazy(() => import('./pages/TrangQuenMatKhau'))
+const SavedToursPage = lazy(() => import('./pages/TrangTourDaLuu'))
 
 function PageLoader() {
   return <div className="grid min-h-[65vh] place-items-center"><div className="text-center"><span className="mx-auto block size-11 animate-spin rounded-full border-4 border-brand-100 border-t-brand-700" /><p className="mt-4 text-sm font-bold text-slate-400">Đang chuẩn bị hành trình...</p></div></div>
@@ -55,6 +58,10 @@ export default function App() {
               <Route path="tours/:id" element={<TourDetailPage />} />
               <Route path="login" element={<AuthPage mode="login" />} />
               <Route path="register" element={<AuthPage mode="register" />} />
+              <Route path="forgot-password" element={<PasswordRecoveryPage />} />
+              <Route path="reset-password" element={<PasswordRecoveryPage />} />
+              <Route path="profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
+              <Route path="saved-tours" element={<SavedToursPage />} />
               <Route path="booking/:tourId" element={<RequireAuth><CheckoutPage /></RequireAuth>} />
               <Route path="my-bookings" element={<RequireAuth><BookingsPage /></RequireAuth>} />
               <Route path="*" element={<NotFound />} />

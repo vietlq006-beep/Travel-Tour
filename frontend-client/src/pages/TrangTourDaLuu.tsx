@@ -1,0 +1,16 @@
+import { GitCompareArrows, Heart, History, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { EmptyState, TourCard } from '../components/DungChung'
+import { clearTours, readTours, type TourCollection } from '../tien-ich-tour'
+import type { Tour } from '../types/du-lieu'
+import { formatMoney } from '../dich-vu-api'
+
+export default function SavedToursPage() {
+  const [tab, setTab] = useState<TourCollection>('wishlist')
+  const [items, setItems] = useState<Tour[]>(() => readTours('wishlist'))
+  const load = () => setItems(readTours(tab))
+  useEffect(() => { window.addEventListener('leviet:tours-saved', load); return () => window.removeEventListener('leviet:tours-saved', load) })
+  const changeTab = (next: TourCollection) => { setTab(next); setItems(readTours(next)) }
+  const tabs: Array<{ key: TourCollection; label: string; icon: typeof Heart }> = [{ key: 'wishlist', label: 'Yêu thích', icon: Heart }, { key: 'recent', label: 'Đã xem', icon: History }, { key: 'compare', label: 'So sánh', icon: GitCompareArrows }]
+  return <section className="min-h-[70vh] py-12 sm:py-16"><div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="section-kicker">Cảm hứng của bạn</p><h1 className="mt-3 text-3xl font-black">Tour đã lưu</h1></div>{items.length > 0 && <button type="button" onClick={() => { clearTours(tab); load() }} className="flex items-center gap-2 text-sm font-bold text-rose-600"><Trash2 size={16} /> Xóa danh sách</button>}</div><div className="mt-7 flex gap-2 overflow-x-auto">{tabs.map(({ key, label, icon: Icon }) => <button key={key} type="button" onClick={() => changeTab(key)} className={`flex h-11 items-center gap-2 rounded-full px-5 font-bold ${tab === key ? 'bg-brand-700 text-white' : 'border border-slate-200 bg-white text-slate-600'}`}><Icon size={17} /> {label}</button>)}</div>{tab === 'compare' && items.length > 0 ? <div className="mt-8 overflow-x-auto rounded-3xl border border-slate-200 bg-white"><table className="min-w-[760px] w-full text-left"><thead><tr className="border-b border-slate-200 bg-slate-50"><th className="p-4">Tiêu chí</th>{items.map((tour) => <th key={tour.id} className="p-4">{tour.name}</th>)}</tr></thead><tbody>{[['Thời lượng', (tour: Tour) => `${tour.durationDays} ngày ${tour.durationNights} đêm`], ['Điểm đến', (tour: Tour) => tour.destinations?.map((item) => item.name).join(', ') || '-'], ['Rating', (tour: Tour) => `${Number(tour.rating?.average || 0).toFixed(1)} / 5`], ['Giá từ', (tour: Tour) => { const prices = (tour.departures || []).map((item) => Number(item.adultPrice)); return prices.length ? formatMoney(Math.min(...prices)) : 'Liên hệ' }]].map(([label, render]) => <tr key={String(label)} className="border-b border-slate-100"><th className="p-4 text-sm">{String(label)}</th>{items.map((tour) => <td key={tour.id} className="p-4 text-sm text-slate-600">{(render as (value: Tour) => string)(tour)}</td>)}</tr>)}</tbody></table></div> : <div className="mt-8">{items.length ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{items.map((tour) => <TourCard key={tour.id} tour={tour} />)}</div> : <EmptyState title="Danh sách đang trống" description="Mở chi tiết tour để lưu yêu thích, so sánh hoặc xem lại gần đây." />}</div>}</div></section>
+}

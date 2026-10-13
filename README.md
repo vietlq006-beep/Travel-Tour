@@ -15,6 +15,12 @@ REST API quản lý tour du lịch xây dựng bằng Node.js, Express, Sequeliz
 - Đánh giá chỉ dành cho khách đã hoàn thành tour.
 - Quản trị người dùng, dashboard doanh thu và xuất báo cáo Excel.
 - Migration có phiên bản, ràng buộc dữ liệu, chỉ mục truy vấn và kiểm thử tự động.
+- Giữ chỗ có thời hạn, job tự hủy đơn quá hạn và hoàn ghế/lượt voucher trong cùng transaction.
+- Thanh toán cọc/toàn bộ, tải chứng từ, import sao kê CSV/XLSX, tự khớp số tiền + nội dung và webhook ký HMAC chống replay.
+- Giá cho người lớn, trẻ em, em bé, người cao tuổi, phụ thu phòng đơn; snapshot giá và chính sách tại lúc đặt.
+- Điều khoản hủy/đổi, điểm đón, giờ tập trung, hành lý, bảo hiểm, visa và giấy tờ theo tour hoặc đợt khởi hành.
+- Admin có booking work queue, ghi chú/timeline, hoàn tiền, duyệt yêu cầu hậu mãi, QR check-in và xuất danh sách đoàn.
+- Website khách có đánh giá, hồ sơ/bảo mật, quên mật khẩu, xác thực liên hệ, lọc/sort nâng cao, tour yêu thích/đã xem/so sánh và gợi ý tour.
 
 ## Khởi chạy nhanh
 
@@ -30,6 +36,20 @@ npm start
 ```
 
 API mặc định chạy tại `http://localhost:5000`. Kiểm tra bằng `GET /api/health`.
+
+Khởi chạy hai giao diện ở các terminal riêng:
+
+```bash
+cd frontend-client
+npm install
+npm run dev
+
+cd frontend-admin
+npm install
+npm run dev
+```
+
+Các cấu hình vận hành mới nằm trong `backend/.env.example`: thời hạn giữ chỗ, chu kỳ job hết hạn, secret webhook ngân hàng và webhook gửi email/SMS. Ở production cần cấu hình `BANK_WEBHOOK_SECRET` và nhà cung cấp thông báo trước khi bật các luồng tương ứng.
 
 Tài khoản mẫu do seeder tạo:
 

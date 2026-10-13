@@ -21,6 +21,7 @@ const User = sequelize.define('User', {
       isEmail: true
     }
   },
+  emailVerifiedAt: { type: DataTypes.DATE, allowNull: true, field: 'email_verified_at' },
   password: {
     type: DataTypes.STRING(255),
     allowNull: false
@@ -30,6 +31,7 @@ const User = sequelize.define('User', {
     allowNull: true,
     field: 'phone_number'
   },
+  phoneVerifiedAt: { type: DataTypes.DATE, allowNull: true, field: 'phone_verified_at' },
   role: {
     type: DataTypes.ENUM('ADMIN', 'CUSTOMER'),
     allowNull: false,

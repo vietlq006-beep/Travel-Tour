@@ -17,7 +17,21 @@ export default function ToursPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [keywordInput, setKeywordInput] = useState(params.get('keyword') || '')
   const queryKey = params.toString()
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (keywordInput === (params.get('keyword') || '')) return
+      const next = new URLSearchParams(params)
+      if (keywordInput.trim()) next.set('keyword', keywordInput.trim())
+      else next.delete('keyword')
+      next.set('page', '1')
+      setLoading(true)
+      setParams(next)
+    }, 450)
+    return () => window.clearTimeout(timer)
+  }, [keywordInput, params, setParams])
 
   useEffect(() => {
     api.get<ApiEnvelope<PaginatedResult<Tour>>>('/tours', { params: Object.fromEntries(new URLSearchParams(queryKey)) })
@@ -45,17 +59,24 @@ export default function ToursPage() {
     setLoading(true)
     setError('')
     setParams({ page: '1', limit: '9' })
+    setKeywordInput('')
   }
 
-  const activeFilterCount = ['keyword', 'destinationId', 'minPrice', 'maxPrice'].filter((key) => params.get(key)).length
+  const activeFilterCount = ['keyword', 'destinationId', 'minPrice', 'maxPrice', 'startDate', 'endDate', 'departureCity', 'minDuration', 'maxDuration', 'minRating', 'vehicleType', 'minSeats'].filter((key) => params.get(key)).length
   const fieldClass = 'h-12 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 text-sm outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100'
 
   const filterPanel = (
     <div className="space-y-6">
       <div className="flex items-center justify-between"><div><p className="text-xs font-extrabold uppercase tracking-widest text-brand-600">Tùy chọn</p><h2 className="mt-1 text-lg font-black">Bộ lọc tour</h2></div><button type="button" onClick={reset} className="flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-100 hover:text-brand-700"><RotateCcw size={14} /> Xóa lọc</button></div>
-      <label className="block"><span className="mb-2 block text-sm font-extrabold">Từ khóa</span><span className="relative block"><Search size={17} className="pointer-events-none absolute left-3.5 top-3.5 text-slate-400" /><input value={params.get('keyword') || ''} onChange={(event) => update('keyword', event.target.value)} placeholder="Tên tour..." className={`${fieldClass} pl-10`} /></span></label>
+      <label className="block"><span className="mb-2 block text-sm font-extrabold">Từ khóa</span><span className="relative block"><Search size={17} className="pointer-events-none absolute left-3.5 top-3.5 text-slate-400" /><input value={keywordInput} onChange={(event) => setKeywordInput(event.target.value)} placeholder="Tên tour..." className={`${fieldClass} pl-10`} /></span><span className="mt-1 block text-xs text-slate-400">Tìm sau 450ms khi ngừng gõ</span></label>
       <label className="block"><span className="mb-2 block text-sm font-extrabold">Điểm đến</span><select value={params.get('destinationId') || ''} onChange={(event) => update('destinationId', event.target.value)} className={fieldClass}><option value="">Tất cả điểm đến</option>{destinations.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
       <div><span className="mb-2 block text-sm font-extrabold">Khoảng giá / người</span><div className="grid grid-cols-2 gap-2"><input type="number" min={0} value={params.get('minPrice') || ''} onChange={(event) => update('minPrice', event.target.value)} placeholder="Từ" className={`${fieldClass} min-w-0`} /><input type="number" min={0} value={params.get('maxPrice') || ''} onChange={(event) => update('maxPrice', event.target.value)} placeholder="Đến" className={`${fieldClass} min-w-0`} /></div></div>
+      <div><span className="mb-2 block text-sm font-extrabold">Ngày đi</span><div className="grid grid-cols-2 gap-2"><input type="date" value={params.get('startDate') || ''} onChange={(event) => update('startDate', event.target.value)} className={`${fieldClass} min-w-0`} /><input type="date" value={params.get('endDate') || ''} onChange={(event) => update('endDate', event.target.value)} className={`${fieldClass} min-w-0`} /></div></div>
+      <label className="block"><span className="mb-2 block text-sm font-extrabold">Nơi khởi hành</span><input value={params.get('departureCity') || ''} onChange={(event) => update('departureCity', event.target.value)} placeholder="Đà Nẵng, Hà Nội..." className={fieldClass} /></label>
+      <div><span className="mb-2 block text-sm font-extrabold">Thời lượng (ngày)</span><div className="grid grid-cols-2 gap-2"><input type="number" min={1} value={params.get('minDuration') || ''} onChange={(event) => update('minDuration', event.target.value)} placeholder="Từ" className={`${fieldClass} min-w-0`} /><input type="number" min={1} value={params.get('maxDuration') || ''} onChange={(event) => update('maxDuration', event.target.value)} placeholder="Đến" className={`${fieldClass} min-w-0`} /></div></div>
+      <label className="block"><span className="mb-2 block text-sm font-extrabold">Phương tiện</span><input value={params.get('vehicleType') || ''} onChange={(event) => update('vehicleType', event.target.value)} placeholder="Xe, máy bay..." className={fieldClass} /></label>
+      <div className="grid grid-cols-2 gap-2"><label><span className="mb-2 block text-sm font-extrabold">Rating từ</span><select value={params.get('minRating') || ''} onChange={(event) => update('minRating', event.target.value)} className={fieldClass}><option value="">Tất cả</option><option value="3">3 sao</option><option value="4">4 sao</option><option value="4.5">4.5 sao</option></select></label><label><span className="mb-2 block text-sm font-extrabold">Chỗ còn lại</span><input type="number" min={1} value={params.get('minSeats') || ''} onChange={(event) => update('minSeats', event.target.value)} className={fieldClass} /></label></div>
+      <label className="block"><span className="mb-2 block text-sm font-extrabold">Sắp xếp</span><select value={params.get('sort') || 'newest'} onChange={(event) => update('sort', event.target.value)} className={fieldClass}><option value="newest">Mới nhất</option><option value="price_asc">Giá thấp đến cao</option><option value="price_desc">Giá cao đến thấp</option><option value="departure_asc">Ngày đi gần nhất</option><option value="popular">Phổ biến</option><option value="rating">Đánh giá cao</option></select></label>
       <div className="rounded-2xl bg-brand-50 p-4"><p className="text-xs font-extrabold text-brand-800">Cần tư vấn hành trình?</p><p className="mt-1 text-xs leading-5 text-slate-500">Gọi <a href="tel:19001234" className="font-black text-brand-700">1900 1234</a> để được hỗ trợ lựa chọn tour.</p></div>
     </div>
   )

@@ -7,7 +7,9 @@ const migrations = [
   require('./migrations/002-add-query-indexes'),
   require('./migrations/003-add-refunded-payment-status'),
   require('./migrations/004-add-tour-video-url'),
-  require('./migrations/005-replace-vnpay-with-vietqr')
+  require('./migrations/005-replace-vnpay-with-vietqr'),
+  require('./migrations/006-booking-lifecycle-and-commercial-terms'),
+  require('./migrations/007-payment-reconciliation-and-verification')
 ];
 
 const run = async () => {

@@ -70,7 +70,29 @@ export interface Tour {
   images?: string[]
   videoUrl?: string
   overview?: string
+  includedServices?: string
+  excludedServices?: string
+  cancellationPolicy?: string
+  changePolicy?: string
+  depositPercent?: number
+  childPolicy?: string
+  infantPolicy?: string
+  seniorPolicy?: string
+  pickupPoints?: string[]
+  meetingInstructions?: string
+  luggagePolicy?: string
+  insuranceDetails?: string
+  visaRequirements?: string
+  requiredDocuments?: string
+  termsAndConditions?: string
   isActive: boolean
+}
+
+export interface Itinerary {
+  id?: EntityId
+  dayNumber: number
+  title: string
+  description: string
 }
 
 export interface Hotel {
@@ -105,6 +127,12 @@ export interface Departure {
   bookedSeats: number
   adultPrice: number
   childPrice: number
+  infantPrice?: number
+  seniorPrice?: number | null
+  singleRoomSurcharge?: number
+  departureCity?: string
+  meetingPoint?: string
+  meetingTime?: string
   hotelId?: EntityId
   vehicleId?: EntityId
   guideId?: EntityId
@@ -122,9 +150,25 @@ export interface Booking {
   bookingCode: string
   bookingDate: string
   finalAmount: number
+  depositAmount?: number
+  totalAmount?: number
+  discountAmount?: number
+  paymentDueAt?: string | null
+  cancellationReason?: string | null
+  numAdults?: number
+  numChildren?: number
+  numInfants?: number
+  numSeniors?: number
+  singleRoomCount?: number
+  checkedInAt?: string | null
+  checkInCode?: string
   status: BookingStatus
   user?: User
   departure?: Departure
+  participants?: Array<{ id: EntityId; fullName: string; gender: string; dateOfBirth: string; passengerType: string }>
+  payments?: Payment[]
+  activities?: BookingActivity[]
+  changeRequests?: BookingChangeRequest[]
 }
 
 export interface Payment {
@@ -136,6 +180,8 @@ export interface Payment {
   createdAt?: string
   updatedAt?: string
   paymentTime?: string
+  paymentPurpose?: 'DEPOSIT' | 'BALANCE' | 'FULL'
+  proofUrl?: string | null
   booking?: Booking
   responseData?: {
     rejectionReason?: string
@@ -144,6 +190,28 @@ export interface Payment {
     reason?: string
     [key: string]: unknown
   }
+}
+
+export interface BookingActivity {
+  id: EntityId
+  eventType: string
+  fromStatus?: string | null
+  toStatus?: string | null
+  note?: string | null
+  createdAt: string
+  actor?: User
+}
+
+export interface BookingChangeRequest {
+  id: EntityId
+  bookingId: EntityId
+  requestType: 'CANCEL' | 'RESCHEDULE' | 'REFUND'
+  reason: string
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  adminNote?: string | null
+  createdAt?: string
+  booking?: Booking
+  requester?: User
 }
 
 export interface DashboardSummary {

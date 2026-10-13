@@ -23,6 +23,9 @@ const TourDeparture = sequelize.define('TourDeparture', {
     allowNull: false,
     field: 'end_date'
   },
+  departureCity: { type: DataTypes.STRING(100), allowNull: true, field: 'departure_city' },
+  meetingPoint: { type: DataTypes.STRING(255), allowNull: true, field: 'meeting_point' },
+  meetingTime: { type: DataTypes.DATE, allowNull: true, field: 'meeting_time' },
   capacity: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -46,6 +49,27 @@ const TourDeparture = sequelize.define('TourDeparture', {
     field: 'child_price',
     validate: { min: 0 }
   },
+  infantPrice: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: false,
+    defaultValue: 0,
+    field: 'infant_price',
+    validate: { min: 0 }
+  },
+  seniorPrice: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    field: 'senior_price',
+    validate: { min: 0 }
+  },
+  singleRoomSurcharge: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: false,
+    defaultValue: 0,
+    field: 'single_room_surcharge',
+    validate: { min: 0 }
+  },
+  termsOverride: { type: DataTypes.TEXT, allowNull: true, field: 'terms_override' },
   hotelId: {
     type: DataTypes.INTEGER,
     allowNull: true,

@@ -1,5 +1,8 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const crypto = require('crypto');
+const { Op } = require('sequelize');
+const { sequelize, User, UserVerificationToken } = require('../models');
+const notificationService = require('./notificationService');
 const AppError = require('../utils/appError');
 const ROLES = require('../constants/roles');
 
@@ -21,6 +24,52 @@ const signToken = (user) => {
 };
 
 class AuthService {
+  hashToken(value, namespace = '') {
+    return crypto.createHash('sha256').update(`${namespace}:${String(value)}`).digest('hex');
+  }
+
+  async issueVerification(user, target, tokenType, options = {}) {
+    const plainToken = options.numeric
+      ? String(crypto.randomInt(100000, 1000000))
+      : crypto.randomBytes(32).toString('hex');
+    await UserVerificationToken.update({ consumedAt: new Date() }, {
+      where: { userId: user.id, tokenType, consumedAt: null }
+    });
+    const expiresAt = new Date(Date.now() + (options.ttlMinutes || 30) * 60 * 1000);
+    await UserVerificationToken.create({
+      userId: user.id,
+      target,
+      tokenType,
+      tokenHash: this.hashToken(plainToken, options.numeric ? `${tokenType}:${user.id}` : tokenType),
+      expiresAt
+    });
+    const delivery = await notificationService.dispatch({
+      channel: options.channel || 'email',
+      target,
+      template: tokenType,
+      variables: { token: plainToken, expiresAt: expiresAt.toISOString(), fullName: user.fullName }
+    });
+    return {
+      delivered: delivery.delivered,
+      expiresAt,
+      ...(process.env.NODE_ENV !== 'production' && { developmentToken: plainToken })
+    };
+  }
+
+  async consumeToken(plainToken, tokenType, transaction, userId = null) {
+    const item = await UserVerificationToken.findOne({
+      where: {
+        tokenHash: this.hashToken(plainToken, userId ? `${tokenType}:${userId}` : tokenType), tokenType, consumedAt: null,
+        ...(userId && { userId }),
+        expiresAt: { [Op.gt]: new Date() }
+      },
+      transaction,
+      lock: transaction?.LOCK.UPDATE
+    });
+    if (!item) throw new AppError('Mã xác thực không hợp lệ hoặc đã hết hạn.', 422);
+    await item.increment('attempts', { transaction });
+    return item;
+  }
   /**
    * Đăng ký tài khoản khách hàng mới
    */
@@ -100,7 +149,10 @@ class AuthService {
     const { fullName, phoneNumber, oldPassword, newPassword } = updateData;
 
     if (fullName !== undefined) user.fullName = fullName.trim();
-    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber || null;
+    if (phoneNumber !== undefined && phoneNumber !== user.phoneNumber) {
+      user.phoneNumber = phoneNumber || null;
+      user.phoneVerifiedAt = null;
+    }
 
     // Nếu có yêu cầu đổi mật khẩu
     if (newPassword) {
@@ -119,6 +171,61 @@ class AuthService {
 
     await user.save();
     return user;
+  }
+
+  async requestPasswordReset(email) {
+    const user = await User.findOne({ where: { email: email.trim().toLowerCase(), isActive: true } });
+    if (!user) return { accepted: true };
+    return { accepted: true, ...(await this.issueVerification(user, user.email, 'PASSWORD_RESET', { channel: 'email', ttlMinutes: 30 })) };
+  }
+
+  async resetPassword(token, newPassword) {
+    await sequelize.transaction(async (transaction) => {
+      const item = await this.consumeToken(token, 'PASSWORD_RESET', transaction);
+      const user = await User.findByPk(item.userId, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!user || !user.isActive) throw new AppError('Tài khoản không còn khả dụng.', 409);
+      user.password = newPassword;
+      await user.save({ transaction });
+      await item.update({ consumedAt: new Date() }, { transaction });
+      await UserVerificationToken.update({ consumedAt: new Date() }, {
+        where: { userId: user.id, tokenType: 'PASSWORD_RESET', consumedAt: null }, transaction
+      });
+    });
+    return { reset: true };
+  }
+
+  async requestEmailVerification(userId) {
+    const user = await User.findByPk(userId);
+    if (!user) throw new AppError('Không tìm thấy người dùng.', 404);
+    if (user.emailVerifiedAt) return { verified: true };
+    return this.issueVerification(user, user.email, 'EMAIL_VERIFICATION', { channel: 'email', ttlMinutes: 60 });
+  }
+
+  async confirmEmailVerification(userId, token) {
+    return sequelize.transaction(async (transaction) => {
+      const item = await this.consumeToken(token, 'EMAIL_VERIFICATION', transaction);
+      if (item.userId !== userId) throw new AppError('Mã xác thực không thuộc tài khoản này.', 403);
+      const user = await User.findByPk(userId, { transaction, lock: transaction.LOCK.UPDATE });
+      await user.update({ emailVerifiedAt: new Date() }, { transaction });
+      await item.update({ consumedAt: new Date() }, { transaction });
+      return { verified: true, user };
+    });
+  }
+
+  async requestPhoneVerification(userId, phoneNumber) {
+    const user = await User.findByPk(userId);
+    if (!user) throw new AppError('Không tìm thấy người dùng.', 404);
+    return this.issueVerification(user, phoneNumber, 'PHONE_VERIFICATION', { channel: 'sms', ttlMinutes: 10, numeric: true });
+  }
+
+  async confirmPhoneVerification(userId, code) {
+    return sequelize.transaction(async (transaction) => {
+      const item = await this.consumeToken(code, 'PHONE_VERIFICATION', transaction, userId);
+      const user = await User.findByPk(userId, { transaction, lock: transaction.LOCK.UPDATE });
+      await user.update({ phoneNumber: item.target, phoneVerifiedAt: new Date() }, { transaction });
+      await item.update({ consumedAt: new Date() }, { transaction });
+      return { verified: true, user };
+    });
   }
 }
 

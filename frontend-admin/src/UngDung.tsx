@@ -14,6 +14,8 @@ const DeparturesPage = lazy(async () => ({ default: (await import('./pages/Trang
 const PaymentsPage = lazy(async () => ({ default: (await import('./pages/TrangThanhToan')).PaymentsPage }))
 const CustomersPage = lazy(async () => ({ default: (await import('./pages/TrangKhachHang')).CustomersPage }))
 const ReportsPage = lazy(async () => ({ default: (await import('./pages/TrangBaoCao')).ReportsPage }))
+const BookingsPage = lazy(async () => ({ default: (await import('./pages/TrangDatTour')).BookingsPage }))
+const ResourcesPage = lazy(async () => ({ default: (await import('./pages/TrangTaiNguyen')).ResourcesPage }))
 
 function PageLoader() {
   return <div className="route-loader">Đang tải...</div>
@@ -40,6 +42,8 @@ export default function App() {
                     <Route path="catalog" element={<CatalogPage />} />
                     <Route path="departures" element={<DeparturesPage />} />
                     <Route path="customers" element={<CustomersPage />} />
+                    <Route path="bookings" element={<BookingsPage />} />
+                    <Route path="resources" element={<ResourcesPage />} />
                     <Route path="payments" element={<PaymentsPage />} />
                     <Route path="reports" element={<ReportsPage />} />
                   </Route>

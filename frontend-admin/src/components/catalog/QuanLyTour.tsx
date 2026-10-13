@@ -18,6 +18,21 @@ interface TourFormValues {
   images?: string
   videoUrl?: string
   overview?: string
+  includedServices?: string
+  excludedServices?: string
+  cancellationPolicy?: string
+  changePolicy?: string
+  depositPercent?: number
+  childPolicy?: string
+  infantPolicy?: string
+  seniorPolicy?: string
+  pickupPoints?: string
+  meetingInstructions?: string
+  luggagePolicy?: string
+  insuranceDetails?: string
+  visaRequirements?: string
+  requiredDocuments?: string
+  termsAndConditions?: string
   isActive: boolean
 }
 
@@ -63,6 +78,7 @@ export function TourManager() {
         ...detail,
         destinationIds: detail.destinations?.map((item) => item.id) || [],
         images: detail.images?.join('\n') || '',
+        pickupPoints: detail.pickupPoints?.join('\n') || '',
       })
       setOpen(true)
     } catch (error) {
@@ -111,6 +127,15 @@ export function TourManager() {
           <Form.Item name="images" label="Ảnh chi tiết, mỗi dòng một URL"><Input.TextArea rows={3} /></Form.Item>
           <Form.Item name="videoUrl" label="Video giới thiệu YouTube" rules={[{ type: 'url', warningOnly: true }]}><Input placeholder="https://www.youtube.com/watch?v=..." /></Form.Item>
           <Form.Item name="overview" label="Tổng quan"><Input.TextArea rows={4} /></Form.Item>
+          <Row gutter={12}><Col xs={24} sm={12}><Form.Item name="includedServices" label="Dịch vụ bao gồm"><Input.TextArea rows={4} /></Form.Item></Col><Col xs={24} sm={12}><Form.Item name="excludedServices" label="Dịch vụ không bao gồm"><Input.TextArea rows={4} /></Form.Item></Col></Row>
+          <Form.Item name="depositPercent" label="Tỷ lệ đặt cọc (%)"><InputNumber min={0} max={100} className="w-full" /></Form.Item>
+          <Row gutter={12}><Col xs={24} sm={12}><Form.Item name="cancellationPolicy" label="Chính sách hủy"><Input.TextArea rows={4} /></Form.Item></Col><Col xs={24} sm={12}><Form.Item name="changePolicy" label="Chính sách đổi"><Input.TextArea rows={4} /></Form.Item></Col></Row>
+          <Row gutter={12}><Col xs={24} sm={8}><Form.Item name="childPolicy" label="Chính sách trẻ em"><Input.TextArea rows={3} /></Form.Item></Col><Col xs={24} sm={8}><Form.Item name="infantPolicy" label="Chính sách em bé"><Input.TextArea rows={3} /></Form.Item></Col><Col xs={24} sm={8}><Form.Item name="seniorPolicy" label="Người cao tuổi"><Input.TextArea rows={3} /></Form.Item></Col></Row>
+          <Form.Item name="pickupPoints" label="Điểm đón (mỗi dòng một điểm)"><Input.TextArea rows={3} /></Form.Item>
+          <Form.Item name="meetingInstructions" label="Hướng dẫn tập trung"><Input.TextArea rows={3} /></Form.Item>
+          <Row gutter={12}><Col xs={24} sm={12}><Form.Item name="luggagePolicy" label="Hành lý"><Input.TextArea rows={3} /></Form.Item></Col><Col xs={24} sm={12}><Form.Item name="insuranceDetails" label="Bảo hiểm"><Input.TextArea rows={3} /></Form.Item></Col></Row>
+          <Row gutter={12}><Col xs={24} sm={12}><Form.Item name="visaRequirements" label="Yêu cầu visa"><Input.TextArea rows={3} /></Form.Item></Col><Col xs={24} sm={12}><Form.Item name="requiredDocuments" label="Giấy tờ cần thiết"><Input.TextArea rows={3} /></Form.Item></Col></Row>
+          <Form.Item name="termsAndConditions" label="Điều khoản riêng của tour"><Input.TextArea rows={5} /></Form.Item>
           <Form.Item name="isActive" label="Đang bán" valuePropName="checked"><Switch /></Form.Item>
           <Button block type="primary" htmlType="submit">Lưu tour</Button>
         </Form>

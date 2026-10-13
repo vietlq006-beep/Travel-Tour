@@ -5,7 +5,9 @@ const validate = require('../middlewares/validateRequest');
 const { authenticateToken, authorizeRoles } = require('../middlewares/authMiddleware');
 const { isValidDate } = require('../validators/commonValidator');
 const BOOKING_STATUS = require('../constants/bookingStatus');
+const { validateIdParam } = require('../validators/commonValidator');
 router.use(authenticateToken, authorizeRoles('ADMIN'));
+router.get('/departures/:id/manifest.xlsx', validate(validateIdParam), wrap(c.exportDepartureManifest));
 router.get('/bookings.xlsx', validate((req) => {
   const errors = [];
   if (req.query.fromDate && !isValidDate(req.query.fromDate)) errors.push({ field: 'fromDate', message: 'Ngày bắt đầu không hợp lệ' });

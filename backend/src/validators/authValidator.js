@@ -30,4 +30,23 @@ const validateProfile = (req) => {
   return errors;
 };
 
-module.exports = { validateRegister, validateLogin, validateProfile };
+const validateForgotPassword = (req) => !req.body.email || !emailPattern.test(req.body.email.trim())
+  ? [{ field: 'email', message: 'Email không hợp lệ' }] : [];
+
+const validateResetPassword = (req) => {
+  const errors = [];
+  if (typeof req.body.token !== 'string' || req.body.token.length < 20) errors.push({ field: 'token', message: 'Mã đặt lại mật khẩu không hợp lệ' });
+  if (!strongPassword.test(req.body.newPassword || '')) errors.push({ field: 'newPassword', message: 'Mật khẩu mới 8-72 ký tự, có chữ hoa, chữ thường và chữ số' });
+  return errors;
+};
+
+const validateVerificationToken = (req) => typeof req.body.token === 'string' && req.body.token.length >= 6
+  ? [] : [{ field: 'token', message: 'Mã xác thực không hợp lệ' }];
+
+const validatePhoneVerification = (req) => phonePattern.test(req.body.phoneNumber || '')
+  ? [] : [{ field: 'phoneNumber', message: 'Số điện thoại không hợp lệ' }];
+
+module.exports = {
+  validateRegister, validateLogin, validateProfile, validateForgotPassword,
+  validateResetPassword, validateVerificationToken, validatePhoneVerification
+};

@@ -11,6 +11,10 @@ USE `leviet_travel_db`;
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS `reviews`;
+DROP TABLE IF EXISTS `payment_reconciliation_events`;
+DROP TABLE IF EXISTS `booking_change_requests`;
+DROP TABLE IF EXISTS `booking_activities`;
+DROP TABLE IF EXISTS `user_verification_tokens`;
 DROP TABLE IF EXISTS `payments`;
 DROP TABLE IF EXISTS `booking_participants`;
 DROP TABLE IF EXISTS `bookings`;
@@ -35,8 +39,10 @@ CREATE TABLE `users` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `full_name` VARCHAR(100) NOT NULL,
   `email` VARCHAR(150) NOT NULL UNIQUE,
+  `email_verified_at` DATETIME NULL,
   `password` VARCHAR(255) NOT NULL,
   `phone_number` VARCHAR(20) NULL,
+  `phone_verified_at` DATETIME NULL,
   `role` ENUM('ADMIN', 'CUSTOMER') NOT NULL DEFAULT 'CUSTOMER',
   `avatar` VARCHAR(255) NULL,
   `is_active` BOOLEAN NOT NULL DEFAULT TRUE,
@@ -126,6 +132,21 @@ CREATE TABLE `tours` (
   `duration_days` INT NOT NULL,
   `duration_nights` INT NOT NULL,
   `overview` TEXT NULL,
+  `included_services` TEXT NULL,
+  `excluded_services` TEXT NULL,
+  `cancellation_policy` TEXT NULL,
+  `change_policy` TEXT NULL,
+  `deposit_percent` DECIMAL(5, 2) NOT NULL DEFAULT 0,
+  `child_policy` TEXT NULL,
+  `infant_policy` TEXT NULL,
+  `senior_policy` TEXT NULL,
+  `pickup_points` JSON NULL,
+  `meeting_instructions` TEXT NULL,
+  `luggage_policy` TEXT NULL,
+  `insurance_details` TEXT NULL,
+  `visa_requirements` TEXT NULL,
+  `required_documents` TEXT NULL,
+  `terms_and_conditions` TEXT NULL,
   `thumbnail` VARCHAR(255) NOT NULL,
   `images` JSON NULL,
   `video_url` VARCHAR(500) NULL,
@@ -174,10 +195,17 @@ CREATE TABLE `tour_departures` (
   `tour_id` INT NOT NULL,
   `start_date` DATE NOT NULL,
   `end_date` DATE NOT NULL,
+  `departure_city` VARCHAR(100) NULL,
+  `meeting_point` VARCHAR(255) NULL,
+  `meeting_time` DATETIME NULL,
   `capacity` INT NOT NULL,
   `booked_seats` INT NOT NULL DEFAULT 0,
   `adult_price` DECIMAL(12, 2) NOT NULL,
   `child_price` DECIMAL(12, 2) NOT NULL,
+  `infant_price` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `senior_price` DECIMAL(12, 2) NULL,
+  `single_room_surcharge` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `terms_override` TEXT NULL,
   `hotel_id` INT NULL,
   `vehicle_id` INT NULL,
   `guide_id` INT NULL,
@@ -232,18 +260,31 @@ CREATE TABLE `bookings` (
   `voucher_id` INT NULL,
   `num_adults` INT NOT NULL DEFAULT 1,
   `num_children` INT NOT NULL DEFAULT 0,
+  `num_infants` INT NOT NULL DEFAULT 0,
+  `num_seniors` INT NOT NULL DEFAULT 0,
+  `single_room_count` INT NOT NULL DEFAULT 0,
   `total_amount` DECIMAL(12, 2) NOT NULL,
   `discount_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0,
   `final_amount` DECIMAL(12, 2) NOT NULL,
+  `deposit_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0,
   `booking_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `payment_due_at` DATETIME NULL,
+  `expired_at` DATETIME NULL,
   `status` ENUM('PENDING_PAYMENT', 'CONFIRMED', 'CANCELLED', 'COMPLETED') NOT NULL DEFAULT 'PENDING_PAYMENT',
+  `cancellation_reason` VARCHAR(500) NULL,
   `notes` TEXT NULL,
+  `pricing_snapshot` JSON NULL,
+  `policy_snapshot` JSON NULL,
+  `check_in_code` VARCHAR(64) NULL,
+  `checked_in_at` DATETIME NULL,
+  `checked_in_by` INT NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT `fk_bookings_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_bookings_departure` FOREIGN KEY (`departure_id`) REFERENCES `tour_departures` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_bookings_voucher` FOREIGN KEY (`voucher_id`) REFERENCES `vouchers` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `chk_booking_passengers` CHECK (`num_adults` > 0 AND `num_children` >= 0),
+  CONSTRAINT `fk_bookings_checked_in_by` FOREIGN KEY (`checked_in_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `chk_booking_passengers` CHECK (`num_adults` > 0 AND `num_children` >= 0 AND `num_infants` >= 0 AND `num_seniors` >= 0 AND `single_room_count` >= 0),
   CONSTRAINT `chk_booking_amounts` CHECK (`total_amount` >= 0 AND `discount_amount` >= 0 AND `final_amount` >= 0 AND `final_amount` = `total_amount` - `discount_amount`),
   INDEX `idx_bookings_code` (`booking_code`),
   INDEX `idx_bookings_user` (`user_id`),
@@ -251,6 +292,8 @@ CREATE TABLE `bookings` (
   INDEX `idx_bookings_status` (`status`),
   INDEX `idx_bookings_user_date` (`user_id`, `booking_date`),
   INDEX `idx_bookings_status_date` (`status`, `booking_date`)
+  ,INDEX `idx_bookings_payment_expiry` (`status`, `payment_due_at`)
+  ,UNIQUE KEY `uq_bookings_check_in_code` (`check_in_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------
@@ -262,7 +305,7 @@ CREATE TABLE `booking_participants` (
   `full_name` VARCHAR(100) NOT NULL,
   `gender` ENUM('MALE', 'FEMALE', 'OTHER') NOT NULL,
   `date_of_birth` DATE NOT NULL,
-  `passenger_type` ENUM('ADULT', 'CHILD') NOT NULL,
+  `passenger_type` ENUM('ADULT', 'CHILD', 'INFANT', 'SENIOR') NOT NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT `fk_bp_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE,
@@ -276,10 +319,14 @@ CREATE TABLE `payments` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `booking_id` INT NOT NULL,
   `payment_method` ENUM('CASH', 'BANK_TRANSFER', 'VIETQR') NOT NULL,
+  `payment_purpose` ENUM('DEPOSIT', 'BALANCE', 'FULL') NOT NULL DEFAULT 'FULL',
   `amount` DECIMAL(12, 2) NOT NULL,
   `transaction_id` VARCHAR(100) NULL,
   `status` ENUM('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED') NOT NULL DEFAULT 'PENDING',
   `payment_time` DATETIME NULL,
+  `proof_url` VARCHAR(500) NULL,
+  `proof_uploaded_at` DATETIME NULL,
+  `provider` VARCHAR(50) NULL,
   `response_data` JSON NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -308,4 +355,82 @@ CREATE TABLE `reviews` (
   INDEX `idx_reviews_tour` (`tour_id`),
   INDEX `idx_reviews_user` (`user_id`),
   INDEX `idx_reviews_tour_created` (`tour_id`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -------------------------------------------------------
+-- 16. NHẬT KÝ VẬN HÀNH BOOKING
+-- -------------------------------------------------------
+CREATE TABLE `booking_activities` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `booking_id` INT NOT NULL,
+  `actor_id` INT NULL,
+  `event_type` VARCHAR(40) NOT NULL,
+  `from_status` VARCHAR(30) NULL,
+  `to_status` VARCHAR(30) NULL,
+  `note` VARCHAR(1000) NULL,
+  `metadata` JSON NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_booking_activities_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_booking_activities_actor` FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  INDEX `idx_booking_activities_booking_created` (`booking_id`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `booking_change_requests` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `booking_id` INT NOT NULL,
+  `user_id` INT NOT NULL,
+  `request_type` ENUM('CANCEL', 'RESCHEDULE', 'REFUND') NOT NULL,
+  `requested_departure_id` INT NULL,
+  `reason` VARCHAR(1000) NOT NULL,
+  `status` ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+  `admin_note` VARCHAR(1000) NULL,
+  `reviewed_by` INT NULL,
+  `reviewed_at` DATETIME NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_change_requests_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_change_requests_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_change_requests_departure` FOREIGN KEY (`requested_departure_id`) REFERENCES `tour_departures` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_change_requests_reviewer` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  INDEX `idx_change_requests_booking` (`booking_id`),
+  INDEX `idx_change_requests_status_created` (`status`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -------------------------------------------------------
+-- 17. ĐỐI SOÁT, CHỐNG REPLAY VÀ TOKEN XÁC THỰC
+-- -------------------------------------------------------
+CREATE TABLE `payment_reconciliation_events` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `source` VARCHAR(40) NOT NULL,
+  `external_transaction_id` VARCHAR(150) NOT NULL,
+  `event_hash` CHAR(64) NOT NULL,
+  `payment_id` INT NULL,
+  `transfer_content` VARCHAR(255) NULL,
+  `amount` DECIMAL(12, 2) NOT NULL,
+  `transaction_time` DATETIME NULL,
+  `status` ENUM('MATCHED', 'UNMATCHED', 'DUPLICATE', 'REJECTED') NOT NULL,
+  `raw_data` JSON NULL,
+  `processed_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_reconciliation_payment` FOREIGN KEY (`payment_id`) REFERENCES `payments` (`id`) ON DELETE SET NULL,
+  UNIQUE KEY `uq_reconciliation_source_external` (`source`, `external_transaction_id`),
+  INDEX `idx_reconciliation_status_time` (`status`, `processed_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `user_verification_tokens` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NULL,
+  `target` VARCHAR(190) NOT NULL,
+  `token_type` ENUM('PASSWORD_RESET', 'EMAIL_VERIFICATION', 'PHONE_VERIFICATION') NOT NULL,
+  `token_hash` CHAR(64) NOT NULL,
+  `expires_at` DATETIME NOT NULL,
+  `consumed_at` DATETIME NULL,
+  `attempts` INT NOT NULL DEFAULT 0,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_verification_tokens_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  UNIQUE KEY `uq_verification_token_hash` (`token_hash`),
+  INDEX `idx_verification_target_type` (`target`, `token_type`, `expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

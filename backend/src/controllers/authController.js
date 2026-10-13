@@ -50,6 +50,43 @@ class AuthController {
       next(error);
     }
   }
+
+  async forgotPassword(req, res, next) {
+    try {
+      const result = await authService.requestPasswordReset(req.body.email);
+      return ApiResponse.success(res, 'Nếu email tồn tại, hướng dẫn đặt lại mật khẩu đã được gửi.', result);
+    } catch (error) { next(error); }
+  }
+
+  async resetPassword(req, res, next) {
+    try {
+      return ApiResponse.success(res, 'Đặt lại mật khẩu thành công.', await authService.resetPassword(req.body.token, req.body.newPassword));
+    } catch (error) { next(error); }
+  }
+
+  async requestEmailVerification(req, res, next) {
+    try {
+      return ApiResponse.success(res, 'Đã gửi mã xác thực email.', await authService.requestEmailVerification(req.user.id));
+    } catch (error) { next(error); }
+  }
+
+  async confirmEmailVerification(req, res, next) {
+    try {
+      return ApiResponse.success(res, 'Xác thực email thành công.', await authService.confirmEmailVerification(req.user.id, req.body.token));
+    } catch (error) { next(error); }
+  }
+
+  async requestPhoneVerification(req, res, next) {
+    try {
+      return ApiResponse.success(res, 'Đã gửi mã xác thực số điện thoại.', await authService.requestPhoneVerification(req.user.id, req.body.phoneNumber));
+    } catch (error) { next(error); }
+  }
+
+  async confirmPhoneVerification(req, res, next) {
+    try {
+      return ApiResponse.success(res, 'Xác thực số điện thoại thành công.', await authService.confirmPhoneVerification(req.user.id, req.body.token));
+    } catch (error) { next(error); }
+  }
 }
 
 module.exports = new AuthController();

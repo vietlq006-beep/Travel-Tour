@@ -1,11 +1,14 @@
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { api, db, login, auth, closeDatabase } = require('../helpers');
+const bookingService = require('../../src/services/bookingService');
+const paymentService = require('../../src/services/paymentService');
 
 const marker = `FLOW-${Date.now()}`;
 let adminToken; let customerToken;
 let categoryId; let destinationId; let tourId; let departureId; let voucherId; let bookingId; let paymentId;
 let rejectedBookingId; let rejectedPaymentId;
+let expiredBookingId; let reconciledBookingId; let reconciledPaymentId; let reconciliationEventId;
 
 before(async () => {
   adminToken = await login();
@@ -29,6 +32,10 @@ before(async () => {
 });
 
 after(async () => {
+  if (reconciliationEventId) await db.PaymentReconciliationEvent.destroy({ where: { id: reconciliationEventId } });
+  if (reconciledPaymentId) await db.Payment.destroy({ where: { id: reconciledPaymentId } });
+  if (reconciledBookingId) await db.Booking.destroy({ where: { id: reconciledBookingId } });
+  if (expiredBookingId) await db.Booking.destroy({ where: { id: expiredBookingId } });
   if (rejectedPaymentId) await db.Payment.destroy({ where: { id: rejectedPaymentId } });
   if (rejectedBookingId) await db.Booking.destroy({ where: { id: rejectedBookingId } });
   if (paymentId) await db.Payment.destroy({ where: { id: paymentId } });
@@ -115,4 +122,46 @@ test('giao dịch VietQR bị từ chối phải có lý do và xuất hiện tr
     status: 'PENDING', paymentMethod: 'VIETQR', page: 1, limit: 100
   }).expect(200);
   assert.equal(pendingList.body.data.items.some((item) => item.id === rejectedPaymentId), false);
+});
+
+test('đơn quá hạn tự hủy và hoàn ghế cùng lượt voucher trong transaction', async () => {
+  const beforeDeparture = await db.TourDeparture.findByPk(departureId);
+  const beforeVoucher = await db.Voucher.findByPk(voucherId);
+  const response = await api.post('/api/bookings').set(auth(customerToken)).send({
+    departureId, voucherCode: marker, numAdults: 1, numChildren: 0, numInfants: 0, numSeniors: 0,
+    participants: [{ fullName: 'Khách Quá Hạn', gender: 'MALE', dateOfBirth: '1990-01-01', passengerType: 'ADULT' }]
+  }).expect(201);
+  expiredBookingId = response.body.data.id;
+  await db.Booking.update({ paymentDueAt: new Date(Date.now() - 60000) }, { where: { id: expiredBookingId } });
+  await bookingService.expirePendingBookings(100);
+  const expired = await db.Booking.findByPk(expiredBookingId);
+  const afterDeparture = await db.TourDeparture.findByPk(departureId);
+  const afterVoucher = await db.Voucher.findByPk(voucherId);
+  assert.equal(expired.status, 'CANCELLED');
+  assert.ok(expired.expiredAt);
+  assert.equal(afterDeparture.bookedSeats, beforeDeparture.bookedSeats);
+  assert.equal(afterVoucher.usedCount, beforeVoucher.usedCount);
+});
+
+test('đối soát cùng mã giao dịch chỉ xác nhận thanh toán một lần', async () => {
+  const bookingResponse = await api.post('/api/bookings').set(auth(customerToken)).send({
+    departureId, numAdults: 1, numChildren: 0,
+    participants: [{ fullName: 'Khách Đối Soát', gender: 'FEMALE', dateOfBirth: '1991-02-02', passengerType: 'ADULT' }]
+  }).expect(201);
+  reconciledBookingId = bookingResponse.body.data.id;
+  const paymentResponse = await api.post('/api/payments').set(auth(customerToken)).send({ bookingId: reconciledBookingId, paymentMethod: 'VIETQR' }).expect(201);
+  reconciledPaymentId = paymentResponse.body.data.payment.id;
+  const transaction = {
+    externalTransactionId: `${marker}-RECONCILE`,
+    amount: Number(paymentResponse.body.data.payment.amount),
+    transferContent: bookingResponse.body.data.bookingCode,
+    transactionTime: new Date()
+  };
+  const first = await paymentService.reconcileOne(transaction, 'INTEGRATION_TEST');
+  reconciliationEventId = first.event.id;
+  const replay = await paymentService.reconcileOne(transaction, 'INTEGRATION_TEST');
+  assert.equal(first.matched, true);
+  assert.equal(replay.duplicate, true);
+  assert.equal((await db.Booking.findByPk(reconciledBookingId)).status, 'CONFIRMED');
+  assert.equal(await db.PaymentReconciliationEvent.count({ where: { source: 'INTEGRATION_TEST', externalTransactionId: transaction.externalTransactionId } }), 1);
 });

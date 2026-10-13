@@ -22,6 +22,12 @@ const Payment = sequelize.define('Payment', {
     allowNull: false,
     field: 'payment_method'
   },
+  paymentPurpose: {
+    type: DataTypes.ENUM('DEPOSIT', 'BALANCE', 'FULL'),
+    allowNull: false,
+    defaultValue: 'FULL',
+    field: 'payment_purpose'
+  },
   amount: {
     type: DataTypes.DECIMAL(12, 2),
     allowNull: false
@@ -47,6 +53,9 @@ const Payment = sequelize.define('Payment', {
     allowNull: true,
     field: 'payment_time'
   },
+  proofUrl: { type: DataTypes.STRING(500), allowNull: true, field: 'proof_url' },
+  proofUploadedAt: { type: DataTypes.DATE, allowNull: true, field: 'proof_uploaded_at' },
+  provider: { type: DataTypes.STRING(50), allowNull: true },
   responseData: {
     type: DataTypes.JSON,
     allowNull: true,
