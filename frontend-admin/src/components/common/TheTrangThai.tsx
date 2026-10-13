@@ -13,7 +13,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
   REFUNDED: { label: 'Đã hoàn tiền', color: 'blue' },
   BANK_TRANSFER: { label: 'Chuyển khoản', color: 'cyan' },
   CASH: { label: 'Tiền mặt', color: 'purple' },
-  VNPAY: { label: 'VNPAY', color: 'geekblue' },
+  VIETQR: { label: 'VietQR', color: 'geekblue' },
 }
 
 interface StatusTagProps {

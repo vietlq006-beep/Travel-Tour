@@ -4,7 +4,7 @@ const { getPagination } = require('../../src/utils/pagination');
 const { validateRegister } = require('../../src/validators/authValidator');
 const { validateCreateBooking } = require('../../src/validators/bookingValidator');
 const { isSupportedVideoUrl } = require('../../src/validators/tourValidator');
-const vnpay = require('../../src/services/vnpayService');
+const { createVietQrData, compactTransferContent } = require('../../src/services/vietQrService');
 const { tours: seededTours, destinations: seededDestinations } = require('../../src/database/seeders/travelCatalog');
 
 test('phân trang chặn giá trị âm và giới hạn tối đa 100', () => {
@@ -44,14 +44,19 @@ test('catalog seed có đúng 30 tour hoàn chỉnh và mã không trùng', () =
   }
 });
 
-test('VNPAY xác minh đúng chữ ký và phát hiện tham số bị sửa', () => {
-  process.env.VNP_TMN_CODE = 'TESTCODE';
-  process.env.VNP_HASH_SECRET = '0123456789abcdefghijklmnopqrstuvwxyz';
-  process.env.VNP_URL = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
-  process.env.VNP_RETURN_URL = 'http://localhost:5000/api/payments/vnpay/return';
-  const url = new URL(vnpay.createPaymentUrl({ paymentId: 99, amount: 1250000, ipAddress: '127.0.0.1' }));
-  const params = Object.fromEntries(url.searchParams.entries());
-  assert.equal(vnpay.verifyCallback(params).valid, true);
-  params.vnp_Amount = '1';
-  assert.equal(vnpay.verifyCallback(params).valid, false);
+test('VietQR tạo đúng tài khoản, số tiền và nội dung đối soát', () => {
+  const data = createVietQrData(
+    { bookingCode: 'LVT-20261013-ABCDEF12' },
+    { amount: '1250000.00' }
+  );
+  const url = new URL(data.qrImageUrl);
+  assert.equal(data.bankId, '970407');
+  assert.equal(data.accountNo, '9330302005');
+  assert.equal(data.accountName, 'Lê Quốc Việt');
+  assert.equal(data.amount, 1250000);
+  assert.equal(data.transferContent, compactTransferContent('LVT-20261013-ABCDEF12'));
+  assert.equal(url.hostname, 'img.vietqr.io');
+  assert.equal(url.pathname, '/image/970407-9330302005-print.png');
+  assert.equal(url.searchParams.get('amount'), '1250000');
+  assert.equal(url.searchParams.get('addInfo'), data.transferContent);
 });

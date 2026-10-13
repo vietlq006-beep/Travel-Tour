@@ -306,10 +306,18 @@ Trạng thái: `PENDING_PAYMENT`, `CONFIRMED`, `CANCELLED`, `COMPLETED`. Không 
 Yêu cầu đăng nhập. Số tiền luôn lấy từ `booking.finalAmount`.
 
 ```json
-{ "bookingId": 25, "paymentMethod": "BANK_TRANSFER" }
+{ "bookingId": 25, "paymentMethod": "VIETQR" }
 ```
 
-Phương thức: `CASH`, `BANK_TRANSFER`, `VNPAY`. Khách không được tự tạo giao dịch tiền mặt. Với VNPAY, response có thêm `paymentUrl` dùng để chuyển trình duyệt tới cổng thanh toán.
+Phương thức: `CASH`, `BANK_TRANSFER`, `VIETQR`. Khách không được tự tạo giao dịch tiền mặt. Với `VIETQR`, response có thêm `vietQr` chứa `qrImageUrl`, ngân hàng, số tài khoản, chủ tài khoản, số tiền và nội dung chuyển khoản. Gọi lại endpoint cho cùng một giao dịch VietQR đang chờ sẽ trả lại chính mã QR đó thay vì tạo giao dịch trùng.
+
+Tài khoản VietQR mặc định:
+
+- Techcombank (`970407`).
+- Số tài khoản `9330302005`.
+- Chủ tài khoản `Lê Quốc Việt`.
+
+Trạng thái VietQR ban đầu là `PENDING`. Quản trị viên phải đối soát giao dịch ngân hàng trước khi cập nhật `SUCCESS`; việc hiển thị hoặc quét QR không tự xác nhận thanh toán.
 
 ### `GET /payments/booking/:bookingId`
 
@@ -320,7 +328,7 @@ Lịch sử giao dịch của đơn. Khách chỉ xem đơn của mình.
 ```json
 {
   "status": "SUCCESS",
-  "transactionId": "BANK-REF-001",
+  "transactionId": "VIETQR-REF-001",
   "responseData": { "note": "Đã đối soát" }
 }
 ```
@@ -328,16 +336,9 @@ Lịch sử giao dịch của đơn. Khách chỉ xem đơn của mình.
 Trạng thái và luồng hợp lệ:
 
 - `PENDING` → `SUCCESS` hoặc `FAILED`.
-- `SUCCESS` → `REFUNDED` sau khi quản trị viên/cổng thanh toán đã thực hiện hoàn tiền.
+- `SUCCESS` → `REFUNDED` sau khi quản trị viên đã thực hiện hoàn tiền.
 - `FAILED` và `REFUNDED` là trạng thái cuối.
 - Khi giao dịch thành công, đơn `PENDING_PAYMENT` tự chuyển `CONFIRMED`.
-
-### Callback VNPAY
-
-- `GET /payments/vnpay/ipn`: VNPAY gọi máy chủ, trả `{ "RspCode": "00", "Message": "..." }`.
-- `GET /payments/vnpay/return`: URL trình duyệt khách quay về, trả response chuẩn của API.
-
-Server kiểm tra HMAC-SHA512, mã tham chiếu, số tiền, mã phản hồi và trạng thái cũ để chống giả mạo/lặp callback. Không đặt hai endpoint này sau middleware JWT.
 
 ## Đánh giá
 

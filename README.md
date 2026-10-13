@@ -11,7 +11,7 @@ REST API quản lý tour du lịch xây dựng bằng Node.js, Express, Sequeliz
 - Voucher theo phần trăm/số tiền, thời hạn, giá trị đơn tối thiểu và giới hạn lượt dùng.
 - Đặt chỗ bằng database transaction và khóa bản ghi chống bán vượt số ghế.
 - Quản lý hành khách, trạng thái đơn, hủy đơn và hoàn lại ghế/lượt voucher.
-- Thanh toán tiền mặt, chuyển khoản và VNPAY HMAC-SHA512; callback có tính idempotent.
+- Thanh toán tiền mặt và VietQR theo đúng số tiền/mã đơn; quản trị viên đối soát rồi xác nhận giao dịch.
 - Đánh giá chỉ dành cho khách đã hoàn thành tour.
 - Quản trị người dùng, dashboard doanh thu và xuất báo cáo Excel.
 - Migration có phiên bản, ràng buộc dữ liệu, chỉ mục truy vấn và kiểm thử tự động.

@@ -111,7 +111,7 @@ export interface Participant {
 export interface Payment {
   id: EntityId
   amount: number
-  paymentMethod: 'VNPAY' | 'BANK_TRANSFER' | 'CASH'
+  paymentMethod: 'VIETQR' | 'BANK_TRANSFER' | 'CASH'
   status: PaymentStatus
 }
 
@@ -134,5 +134,16 @@ export interface VoucherValidation {
 
 export interface PaymentCreation {
   payment: Payment
-  paymentUrl?: string
+  vietQr?: VietQrDetails
+}
+
+export interface VietQrDetails {
+  provider: 'VIETQR'
+  bankId: string
+  bankName: string
+  accountNo: string
+  accountName: string
+  amount: number
+  transferContent: string
+  qrImageUrl: string
 }

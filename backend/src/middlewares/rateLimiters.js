@@ -11,6 +11,5 @@ const createLimiter = (windowMs, limit, message) => rateLimit({
 });
 
 const authLimiter = createLimiter(15 * 60 * 1000, 20, 'Bạn thao tác xác thực quá nhiều lần. Vui lòng thử lại sau.');
-const paymentCallbackLimiter = createLimiter(60 * 1000, 120, 'Quá nhiều yêu cầu callback thanh toán.');
 
-module.exports = { authLimiter, paymentCallbackLimiter };
+module.exports = { authLimiter };

@@ -8,7 +8,7 @@
 - Trang chi tiết có thư viện ảnh, lịch trình từng ngày và lịch khởi hành.
 - Đăng ký, đăng nhập và lưu phiên JWT.
 - Đặt chỗ cho đoàn, nhập từng hành khách và áp mã giảm giá.
-- Khởi tạo thanh toán rồi chuyển hướng đến VNPay.
+- Thanh toán VietQR theo đúng số tiền và nội dung của từng đơn.
 - Lịch sử đơn, chi tiết hành khách/giao dịch, thanh toán lại và hủy đơn đang chờ.
 
 ## Chạy local
@@ -18,10 +18,12 @@ npm install
 npm run dev
 ```
 
+Website khách hàng chạy cố định tại `http://localhost:5174` để không trùng với trang quản trị tại `http://localhost:5173`.
+
 API mặc định: `http://localhost:5000/api`. Có thể đổi bằng biến môi trường:
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
-Callback VNPay (`VNP_RETURN_URL` và IPN) phải tiếp tục trỏ về endpoint backend để chữ ký và trạng thái giao dịch được xác thực phía máy chủ.
+VietQR sử dụng tài khoản Techcombank cấu hình ở backend. Giao dịch giữ trạng thái chờ cho tới khi quản trị viên đối soát và xác nhận.

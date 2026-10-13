@@ -17,7 +17,7 @@ const Payment = sequelize.define('Payment', {
     type: DataTypes.ENUM(
       PAYMENT_METHOD.CASH,
       PAYMENT_METHOD.BANK_TRANSFER,
-      PAYMENT_METHOD.VNPAY
+      PAYMENT_METHOD.VIETQR
     ),
     allowNull: false,
     field: 'payment_method'

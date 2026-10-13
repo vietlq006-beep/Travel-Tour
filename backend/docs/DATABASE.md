@@ -72,6 +72,7 @@ Các migration hiện có:
 2. `002-add-query-indexes`: chỉ mục cho lọc, phân trang, dashboard.
 3. `003-add-refunded-payment-status`: thêm trạng thái thanh toán `REFUNDED`.
 4. `004-add-tour-video-url`: thêm URL video YouTube cho tour.
+5. `005-replace-vnpay-with-vietqr`: chuyển dữ liệu thanh toán VNPay cũ sang VietQR và cập nhật enum phương thức.
 
 Khi thêm migration:
 

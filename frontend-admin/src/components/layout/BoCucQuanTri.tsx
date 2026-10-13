@@ -19,7 +19,7 @@ const NAV_ITEMS: MenuProps['items'] = [
   { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
   { key: '/catalog', icon: <TagOutlined />, label: 'Danh mục & tour' },
   { key: '/departures', icon: <CalendarOutlined />, label: 'Khởi hành & điều phối' },
-  { key: '/payments', icon: <BankOutlined />, label: 'Duyệt chuyển khoản' },
+  { key: '/payments', icon: <BankOutlined />, label: 'Duyệt VietQR' },
   { key: '/reports', icon: <FileExcelOutlined />, label: 'Báo cáo Excel' },
 ]
 

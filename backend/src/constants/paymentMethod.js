@@ -1,7 +1,7 @@
 const PAYMENT_METHOD = Object.freeze({
   CASH: 'CASH',
   BANK_TRANSFER: 'BANK_TRANSFER',
-  VNPAY: 'VNPAY'
+  VIETQR: 'VIETQR'
 });
 
 const PAYMENT_STATUS = Object.freeze({

@@ -1,6 +1,6 @@
 # Dữ liệu danh mục và nguồn nội dung
 
-Seeder tạo một danh mục có thể dùng trực tiếp để hiển thị gồm 6 danh mục, 24 điểm đến, 4 khách sạn, 30 tour, 94 ngày lịch trình, ảnh, video và ít nhất 3 đợt khởi hành tương lai cho mỗi tour. Chạy lại seeder sẽ cập nhật các bản ghi cùng tên/mã thay vì nhân bản tour.
+Seeder tạo một danh mục có thể dùng trực tiếp để hiển thị gồm 6 danh mục, 24 điểm đến, 4 khách sạn, 30 tour, 94 ngày lịch trình, ảnh, video và ít nhất 3 đợt khởi hành tương lai cho mỗi tour. Seeder cũng tạo 3 khách hàng demo và 10 đơn mẫu trong năm hiện tại, gồm doanh thu nhiều tháng, đủ trạng thái booking và các giao dịch chuyển khoản đang chờ duyệt. Chạy lại seeder sẽ cập nhật các bản ghi cùng tên/mã thay vì nhân bản tour hoặc đơn mẫu.
 
 ## Nguyên tắc dữ liệu
 
@@ -90,4 +90,6 @@ Sau khi seed, kiểm tra nhanh:
 ```sql
 SELECT code, name, video_url, JSON_LENGTH(images) AS image_count FROM tours ORDER BY id;
 SELECT tour_id, COUNT(*) AS departures FROM tour_departures WHERE status = 'OPEN' GROUP BY tour_id;
+SELECT booking_code, booking_date, status, final_amount FROM bookings WHERE booking_code LIKE 'DEMO-%' ORDER BY booking_date;
+SELECT payment_method, status, COUNT(*) AS total FROM payments GROUP BY payment_method, status;
 ```

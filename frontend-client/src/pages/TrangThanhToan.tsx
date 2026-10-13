@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { api, apiError, assetUrl, dataOf, FALLBACK_IMAGE, formatDate, formatMoney } from '../dich-vu-api'
 import { Alert } from '../components/DungChung'
-import type { ApiEnvelope, Booking, Gender, Participant, PassengerType, PaymentCreation, Tour, VoucherValidation } from '../types/du-lieu'
+import { VietQrDialog } from '../components/ThanhToanVietQr'
+import type { ApiEnvelope, Booking, Gender, Participant, PassengerType, PaymentCreation, Tour, VietQrDetails, VoucherValidation } from '../types/du-lieu'
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
@@ -46,6 +47,8 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false)
   const [validating, setValidating] = useState(false)
   const [error, setError] = useState('')
+  const [vietQr, setVietQr] = useState<VietQrDetails | null>(null)
+  const [createdBookingCode, setCreatedBookingCode] = useState('')
 
   useEffect(() => {
     api.get<ApiEnvelope<Tour>>(`/tours/${tourId}`)
@@ -125,10 +128,11 @@ export default function CheckoutPage() {
       }))
       const payment = dataOf<PaymentCreation>(await api.post<ApiEnvelope<PaymentCreation>>('/payments', {
         bookingId: booking.id,
-        paymentMethod: 'VNPAY',
+        paymentMethod: 'VIETQR',
       }))
-      if (!payment.paymentUrl) throw new Error('PAYMENT_URL_MISSING')
-      window.location.assign(payment.paymentUrl)
+      if (!payment.vietQr) throw new Error('VIETQR_DATA_MISSING')
+      setCreatedBookingCode(booking.bookingCode)
+      setVietQr(payment.vietQr)
     } catch (requestError) {
       if (booking) navigate(`/my-bookings?created=${encodeURIComponent(booking.bookingCode)}`, { replace: true })
       else setError(apiError(requestError, 'Không thể hoàn tất đặt chỗ.'))
@@ -213,12 +217,13 @@ export default function CheckoutPage() {
                 {voucher && <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-brand-700"><CheckCircle2 size={16} /> Đã giảm {formatMoney(voucher.discountAmount)}</p>}
               </div>
               <div className="mt-5 flex items-end justify-between border-t border-slate-200 pt-5"><span className="font-bold">Tổng thanh toán</span><strong className="text-2xl text-rose-600">{formatMoney(finalAmount)}</strong></div>
-              <button disabled={submitting || !selected} className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-rose-600 font-extrabold text-white hover:bg-rose-700 disabled:opacity-60"><CreditCard size={19} /> {submitting ? 'Đang tạo đơn...' : 'Đặt chỗ & thanh toán VNPay'}</button>
-              <p className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400"><ShieldCheck size={15} /> Thanh toán bảo mật qua VNPay</p>
+              <button disabled={submitting || !selected} className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-rose-600 font-extrabold text-white hover:bg-rose-700 disabled:opacity-60"><CreditCard size={19} /> {submitting ? 'Đang tạo đơn...' : 'Đặt chỗ & thanh toán VietQR'}</button>
+              <p className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400"><ShieldCheck size={15} /> Chuyển khoản nhanh qua VietQR · Napas 247</p>
             </div>
           </aside>
         </div>
       </form>
+      <VietQrDialog payment={vietQr} onClose={() => navigate(`/my-bookings?created=${encodeURIComponent(createdBookingCode)}`, { replace: true })} />
     </section>
   )
 }

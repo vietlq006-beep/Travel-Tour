@@ -54,8 +54,14 @@ test('khách đặt chỗ và hệ thống tính giá voucher phía máy chủ',
 });
 
 test('thanh toán thành công tự xác nhận đơn', async () => {
-  const created = await api.post('/api/payments').set(auth(customerToken)).send({ bookingId, paymentMethod: 'BANK_TRANSFER' }).expect(201);
+  const created = await api.post('/api/payments').set(auth(customerToken)).send({ bookingId, paymentMethod: 'VIETQR' }).expect(201);
   paymentId = created.body.data.payment.id;
+  assert.equal(created.body.data.vietQr.accountNo, '9330302005');
+  assert.equal(created.body.data.vietQr.accountName, 'Lê Quốc Việt');
+  assert.equal(created.body.data.vietQr.amount, 2700000);
+  assert.match(created.body.data.vietQr.qrImageUrl, /^https:\/\/img\.vietqr\.io\/image\/970407-9330302005-print\.png\?/);
+  const reopened = await api.post('/api/payments').set(auth(customerToken)).send({ bookingId, paymentMethod: 'VIETQR' }).expect(201);
+  assert.equal(reopened.body.data.payment.id, paymentId);
   await api.patch(`/api/payments/${paymentId}/status`).set(auth(adminToken)).send({ status: 'SUCCESS', transactionId: marker }).expect(200);
   assert.equal((await db.Booking.findByPk(bookingId)).status, 'CONFIRMED');
 });

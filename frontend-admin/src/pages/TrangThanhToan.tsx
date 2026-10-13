@@ -31,10 +31,10 @@ export function PaymentsPage() {
     }
   }
 
-  const createBankTransfer = async (booking: Booking) => {
+  const createVietQrPayment = async (booking: Booking) => {
     try {
-      await api.post('/payments', { bookingId: booking.id, paymentMethod: 'BANK_TRANSFER' })
-      void message.success('Đã tạo giao dịch chuyển khoản')
+      await api.post('/payments', { bookingId: booking.id, paymentMethod: 'VIETQR' })
+      void message.success('Đã tạo giao dịch VietQR')
       await loadPayments(booking)
     } catch (error) {
       void message.error(getErrorMessage(error))
@@ -42,7 +42,7 @@ export function PaymentsPage() {
   }
 
   const approve = async (payment: Payment) => {
-    const transactionId = `BANK-${dayjs().format('YYYYMMDD-HHmmss')}-${payment.id}`
+    const transactionId = `VIETQR-${dayjs().format('YYYYMMDD-HHmmss')}-${payment.id}`
     try {
       await api.patch(`/payments/${payment.id}/status`, {
         status: 'SUCCESS',
@@ -83,7 +83,7 @@ export function PaymentsPage() {
       render: (_, record) => (
         <Space>
           <Button onClick={() => void loadPayments(record)}>Xem</Button>
-          <Button aria-label="Tạo giao dịch chuyển khoản" icon={<PlusOutlined />} onClick={() => void createBankTransfer(record)} />
+          <Button aria-label="Tạo giao dịch VietQR" icon={<PlusOutlined />} onClick={() => void createVietQrPayment(record)} />
         </Space>
       ),
     },
@@ -99,7 +99,7 @@ export function PaymentsPage() {
       width: 190,
       render: (_, record) => (
         <Space>
-          <Button type="primary" icon={<CheckCircleOutlined />} disabled={record.status !== 'PENDING' || record.paymentMethod !== 'BANK_TRANSFER'} onClick={() => void approve(record)}>Xác nhận</Button>
+          <Button type="primary" icon={<CheckCircleOutlined />} disabled={record.status !== 'PENDING' || !['VIETQR', 'BANK_TRANSFER'].includes(record.paymentMethod)} onClick={() => void approve(record)}>Xác nhận</Button>
           <Button danger disabled={record.status !== 'PENDING'} onClick={() => modal.confirm({ title: 'Từ chối giao dịch?', onOk: () => fail(record) })}>Từ chối</Button>
         </Space>
       ),
@@ -108,7 +108,7 @@ export function PaymentsPage() {
 
   return (
     <>
-      <PageTitle title="Duyệt chuyển khoản" subtitle="Kiểm tra giao dịch BANK_TRANSFER đang chờ và xác nhận đơn hàng" extra={<Button icon={<ReloadOutlined />} onClick={() => void bookings.load()}>Làm mới</Button>} />
+      <PageTitle title="Duyệt thanh toán VietQR" subtitle="Đối soát giao dịch VietQR đang chờ và xác nhận đơn hàng" extra={<Button icon={<ReloadOutlined />} onClick={() => void bookings.load()}>Làm mới</Button>} />
       <Card>
         <Table
           rowKey="id"

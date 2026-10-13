@@ -34,7 +34,7 @@ Copy-Item .env.example .env
 - `JWT_SECRET` là chuỗi ngẫu nhiên ít nhất 32 ký tự.
 - `CLIENT_ADMIN_URL`/`CLIENT_CUSTOMER_URL` là origin HTTPS chính xác, không có path.
 - `TRUST_PROXY=1` chỉ khi có đúng một reverse proxy tin cậy trước Node.js.
-- Thông tin VNPAY lấy từ merchant portal; không dùng secret sandbox trên production.
+- Kiểm tra chính xác tài khoản Techcombank nhận VietQR trước khi triển khai production.
 - Không commit `.env`, dump database, log chứa token hoặc secret.
 
 Có thể sinh secret bằng PowerShell:
@@ -94,18 +94,17 @@ Hiện ảnh được ghi vào `backend/uploads` và public tại `/uploads/...`
 - Nếu chạy nhiều instance, chuyển sang S3/Cloudinary/MinIO; ổ đĩa cục bộ giữa các instance không đồng bộ.
 - Thiết lập job dọn file mồ côi nếu người dùng upload rồi request nghiệp vụ thất bại.
 
-## 7. VNPAY
+## 7. VietQR
 
-- `VNP_RETURN_URL` phải là URL HTTPS public `/api/payments/vnpay/return`.
-- Cấu hình IPN phía VNPAY tới `/api/payments/vnpay/ipn`.
-- Hai endpoint callback không dùng JWT; độ tin cậy đến từ HMAC-SHA512 và kiểm tra lại số tiền/mã giao dịch/trạng thái.
-- Chỉ trả hàng/cấp dịch vụ sau khi database có payment `SUCCESS`, không dựa vào giao diện return của trình duyệt.
-- `REFUNDED` trong API là ghi nhận nghiệp vụ sau khi hoàn tiền thực tế đã thành công; code hiện không tự gọi API refund VNPAY.
+- Cấu hình `VIETQR_BANK_ID`, `VIETQR_BANK_NAME`, `VIETQR_ACCOUNT_NO`, `VIETQR_ACCOUNT_NAME` và `VIETQR_ACCOUNT_DISPLAY_NAME` theo tài khoản nhận tiền thực tế.
+- Mã QR khóa số tiền và nội dung đối soát theo từng đơn nhưng không tự xác nhận giao dịch.
+- Chỉ xác nhận tour sau khi quản trị viên kiểm tra tiền đã vào đúng tài khoản và cập nhật payment thành `SUCCESS`.
+- `REFUNDED` là ghi nhận nghiệp vụ sau khi hoàn tiền thực tế đã thành công; hệ thống không tự gọi API hoàn tiền ngân hàng.
 
 ## 8. Giám sát và bảo mật
 
 - Thu thập access log/error log, luôn giữ `X-Request-Id` để truy vết.
-- Cảnh báo khi 5xx tăng, connection pool cạn, callback thanh toán lỗi hoặc ghế/voucher vi phạm đối soát.
+- Cảnh báo khi 5xx tăng, connection pool cạn hoặc ghế/voucher vi phạm đối soát.
 - Chạy `npm audit` định kỳ và đánh giá tác động trước khi dùng `--force`.
 - Xoay `JWT_SECRET` theo quy trình; đổi secret sẽ vô hiệu toàn bộ token cũ.
 - Đổi mật khẩu tài khoản mẫu ngay sau khởi tạo production.
@@ -121,6 +120,7 @@ Hiện ảnh được ghi vào `backend/uploads` và public tại `/uploads/...`
 - [ ] Đặt đồng thời không vượt `capacity`.
 - [ ] Hủy đơn chưa trả tiền hoàn ghế/voucher.
 - [ ] Đơn đã trả tiền bị chặn hủy cho tới khi payment là `REFUNDED`.
-- [ ] Callback VNPAY sai chữ ký hoặc sai số tiền không cập nhật đơn.
+- [ ] Mã VietQR hiển thị đúng ngân hàng, tài khoản, số tiền và nội dung của đơn.
+- [ ] Giao dịch chỉ chuyển `SUCCESS` sau khi quản trị viên đối soát ngân hàng.
 - [ ] Upload tồn tại sau khi restart/deploy.
 - [ ] File Excel tải được và không chứa dữ liệu ngoài bộ lọc.

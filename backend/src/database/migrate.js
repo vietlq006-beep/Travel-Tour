@@ -6,7 +6,8 @@ const migrations = [
   require('./migrations/001-harden-constraints'),
   require('./migrations/002-add-query-indexes'),
   require('./migrations/003-add-refunded-payment-status'),
-  require('./migrations/004-add-tour-video-url')
+  require('./migrations/004-add-tour-video-url'),
+  require('./migrations/005-replace-vnpay-with-vietqr')
 ];
 
 const run = async () => {

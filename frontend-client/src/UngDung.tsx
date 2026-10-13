@@ -8,7 +8,6 @@ const AuthPage = lazy(() => import('./pages/TrangXacThuc'))
 const BookingsPage = lazy(() => import('./pages/TrangDonDat'))
 const CheckoutPage = lazy(() => import('./pages/TrangThanhToan'))
 const HomePage = lazy(() => import('./pages/TrangChu'))
-const PaymentReturnPage = lazy(() => import('./pages/TrangKetQuaThanhToan'))
 const TourDetailPage = lazy(() => import('./pages/TrangChiTietTour'))
 const ToursPage = lazy(() => import('./pages/TrangDanhSachTour'))
 
@@ -18,7 +17,9 @@ function PageLoader() {
 
 function ScrollToTop() {
   const { pathname } = useLocation()
-  useEffect(() => window.scrollTo({ top: 0, behavior: 'instant' }), [pathname])
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [pathname])
   return null
 }
 
@@ -55,7 +56,6 @@ export default function App() {
               <Route path="register" element={<AuthPage mode="register" />} />
               <Route path="booking/:tourId" element={<RequireAuth><CheckoutPage /></RequireAuth>} />
               <Route path="my-bookings" element={<RequireAuth><BookingsPage /></RequireAuth>} />
-              <Route path="payment-result" element={<RequireAuth><PaymentReturnPage /></RequireAuth>} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

@@ -275,7 +275,7 @@ CREATE TABLE `booking_participants` (
 CREATE TABLE `payments` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `booking_id` INT NOT NULL,
-  `payment_method` ENUM('CASH', 'BANK_TRANSFER', 'VNPAY') NOT NULL,
+  `payment_method` ENUM('CASH', 'BANK_TRANSFER', 'VIETQR') NOT NULL,
   `amount` DECIMAL(12, 2) NOT NULL,
   `transaction_id` VARCHAR(100) NULL,
   `status` ENUM('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED') NOT NULL DEFAULT 'PENDING',

@@ -104,7 +104,7 @@ export interface Departure {
 
 export type BookingStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
 export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED'
-export type PaymentMethod = 'BANK_TRANSFER' | 'CASH' | 'VNPAY'
+export type PaymentMethod = 'BANK_TRANSFER' | 'CASH' | 'VIETQR'
 
 export interface Booking {
   id: EntityId
