@@ -12,7 +12,7 @@ const TourDetailPage = lazy(() => import('./pages/TrangChiTietTour'))
 const ToursPage = lazy(() => import('./pages/TrangDanhSachTour'))
 
 function PageLoader() {
-  return <div className="min-h-[65vh] animate-pulse bg-slate-100" />
+  return <div className="grid min-h-[65vh] place-items-center"><div className="text-center"><span className="mx-auto block size-11 animate-spin rounded-full border-4 border-brand-100 border-t-brand-700" /><p className="mt-4 text-sm font-bold text-slate-400">Đang chuẩn bị hành trình...</p></div></div>
 }
 
 function ScrollToTop() {
@@ -31,11 +31,12 @@ function RequireAuth({ children }: { children: ReactElement }) {
 
 function NotFound() {
   return (
-    <section className="grid min-h-[65vh] place-items-center px-4 text-center">
-      <div>
-        <p className="text-7xl font-black text-emerald-100">404</p>
-        <h1 className="mt-2 text-2xl font-black">Trang này không tồn tại</h1>
-        <Link to="/" className="mt-5 inline-flex h-11 items-center rounded-md bg-brand-700 px-5 font-bold text-white">Về trang chủ</Link>
+    <section className="grid min-h-[65vh] place-items-center px-4 py-16 text-center">
+      <div className="surface-card w-full max-w-lg rounded-3xl p-10">
+        <p className="text-8xl font-black tracking-tighter text-emerald-100">404</p>
+        <h1 className="mt-2 text-2xl font-black">Có vẻ bạn đã đi lạc</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-500">Trang này không tồn tại hoặc đã được chuyển sang một hành trình khác.</p>
+        <Link to="/" className="mt-7 inline-flex h-12 items-center rounded-full bg-brand-700 px-6 font-extrabold text-white shadow-lg shadow-emerald-900/15 transition hover:-translate-y-0.5 hover:bg-brand-800">Về trang chủ</Link>
       </div>
     </section>
   )

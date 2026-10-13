@@ -94,30 +94,30 @@ export default function BookingsPage() {
   }
 
   return (
-    <section className="min-h-[70vh] py-10 sm:py-14">
+    <section className="min-h-[70vh] py-12 sm:py-16">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-5">
-          <div><p className="text-sm font-bold uppercase tracking-widest text-brand-700">Hành trình của bạn</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">Đơn của tôi</h1><p className="mt-2 text-slate-500">Theo dõi trạng thái đặt chỗ và thanh toán.</p></div>
-          <select value={filter} onChange={(event) => setFilter(event.target.value as BookingStatus | '')} className="h-11 rounded border border-slate-300 bg-white px-3 text-sm font-semibold outline-none focus:border-brand-600"><option value="">Tất cả trạng thái</option>{Object.entries(STATUS).map(([value, item]) => <option key={value} value={value}>{item.label}</option>)}</select>
+          <div><p className="section-kicker">Hành trình của bạn</p><h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Đơn của tôi</h1><p className="mt-2 text-slate-500">Theo dõi trạng thái đặt chỗ và thanh toán.</p></div>
+          <select value={filter} onChange={(event) => setFilter(event.target.value as BookingStatus | '')} className="h-12 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold shadow-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"><option value="">Tất cả trạng thái</option>{Object.entries(STATUS).map(([value, item]) => <option key={value} value={value}>{item.label}</option>)}</select>
         </div>
         {notice && <div className="mt-6"><Alert tone="success">{notice}</Alert></div>}
         {error && <div className="mt-6"><Alert>{error}</Alert></div>}
         <div className="mt-8 space-y-5">
           {loading
-            ? Array.from({ length: 3 }, (_, index) => <div key={index} className="h-48 animate-pulse rounded-md bg-slate-200" />)
+            ? Array.from({ length: 3 }, (_, index) => <div key={index} className="skeleton-shimmer h-52 rounded-3xl bg-slate-200" />)
             : bookings.length
               ? bookings.map((booking) => {
                 const status = STATUS[booking.status]
                 const detail = details[booking.id]
                 return (
-                  <article key={booking.id} className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
+                  <article key={booking.id} className="surface-card group overflow-hidden rounded-3xl transition-all duration-300 hover:border-brand-200 hover:shadow-xl">
                     <div className="grid gap-5 p-5 sm:grid-cols-[150px_1fr] sm:p-6">
-                      <img src={assetUrl(booking.departure?.tour?.thumbnail) || FALLBACK_IMAGE} alt="" className="aspect-[4/3] w-full rounded object-cover sm:h-full" />
+                      <img src={assetUrl(booking.departure?.tour?.thumbnail) || FALLBACK_IMAGE} alt="" className="aspect-[4/3] w-full rounded-2xl object-cover sm:h-full" />
                       <div className="min-w-0">
-                        <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase text-brand-700">{booking.bookingCode}</p><h2 className="mt-1 text-lg font-extrabold">{booking.departure?.tour?.name || 'Tour du lịch'}</h2></div><span className={`rounded border px-2.5 py-1 text-xs font-bold ${status.style}`}>{status.label}</span></div>
+                        <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-extrabold uppercase tracking-wider text-brand-700">{booking.bookingCode}</p><h2 className="mt-1 text-lg font-black transition group-hover:text-brand-700">{booking.departure?.tour?.name || 'Tour du lịch'}</h2></div><span className={`rounded-full border px-3 py-1.5 text-xs font-bold ${status.style}`}>{status.label}</span></div>
                         <div className="mt-4 grid gap-2 text-sm text-slate-500 sm:grid-cols-2"><p className="flex items-center gap-2"><CalendarDays size={16} /> {formatDate(booking.departure?.startDate)}</p><p className="flex items-center gap-2"><Users size={16} /> {booking.numAdults} người lớn · {booking.numChildren} trẻ em</p><p className="flex items-center gap-2"><ReceiptText size={16} /> Ngày đặt {formatDate(booking.bookingDate)}</p><p className="font-extrabold text-rose-600">{formatMoney(booking.finalAmount)}</p></div>
                         <div className="mt-5 flex flex-wrap gap-2">
-                          {booking.status === 'PENDING_PAYMENT' && <><button type="button" disabled={busy === booking.id} onClick={() => void pay(booking)} className="flex h-10 items-center gap-2 rounded bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60"><CreditCard size={17} /> Thanh toán VietQR</button><button type="button" disabled={busy === booking.id} onClick={() => void cancelBooking(booking)} className="flex h-10 items-center gap-2 rounded border border-slate-300 px-4 text-sm font-bold text-slate-600 hover:border-rose-300 hover:text-rose-700"><XCircle size={17} /> Hủy đơn</button></>}
+                          {booking.status === 'PENDING_PAYMENT' && <><button type="button" disabled={busy === booking.id} onClick={() => void pay(booking)} className="flex h-10 items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60"><CreditCard size={17} /> Thanh toán VietQR</button><button type="button" disabled={busy === booking.id} onClick={() => void cancelBooking(booking)} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700"><XCircle size={17} /> Hủy đơn</button></>}
                           <button type="button" onClick={() => void toggleDetails(booking)} className="ml-auto flex h-10 items-center gap-2 text-sm font-bold text-brand-700">Chi tiết {expanded === booking.id ? <ChevronUp size={17} /> : <ChevronDown size={17} />}</button>
                         </div>
                       </div>
@@ -126,7 +126,7 @@ export default function BookingsPage() {
                   </article>
                 )
               })
-              : <EmptyState title="Bạn chưa có đơn đặt nào" description="Chọn một hành trình và bắt đầu chuyến đi tiếp theo." action={<Link to="/tours" className="inline-flex h-11 items-center gap-2 rounded-md bg-brand-700 px-5 font-bold text-white"><MapPin size={17} /> Khám phá tour</Link>} />}
+              : <EmptyState title="Bạn chưa có đơn đặt nào" description="Chọn một hành trình và bắt đầu chuyến đi tiếp theo." action={<Link to="/tours" className="inline-flex h-11 items-center gap-2 rounded-full bg-brand-700 px-5 font-bold text-white shadow-lg shadow-emerald-900/15"><MapPin size={17} /> Khám phá tour</Link>} />}
         </div>
         {!loading && bookings.length > 0 && <button type="button" onClick={load} className="mx-auto mt-7 flex items-center gap-2 text-sm font-bold text-slate-500"><RotateCcw size={16} /> Làm mới trạng thái</button>}
       </div>

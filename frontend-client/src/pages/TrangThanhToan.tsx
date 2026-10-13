@@ -21,7 +21,7 @@ interface CounterProps {
 
 function Counter({ value, min, max, onChange }: CounterProps) {
   return (
-    <div className="flex h-10 items-center rounded border border-slate-300 bg-white">
+    <div className="flex h-10 items-center rounded-xl border border-slate-200 bg-slate-50">
       <button type="button" aria-label="Giảm" disabled={value <= min} onClick={() => onChange(value - 1)} className="grid size-10 place-items-center disabled:opacity-30"><Minus size={16} /></button>
       <span className="w-9 text-center font-bold">{value}</span>
       <button type="button" aria-label="Tăng" disabled={value >= max} onClick={() => onChange(value + 1)} className="grid size-10 place-items-center disabled:opacity-30"><Plus size={16} /></button>
@@ -154,19 +154,19 @@ export default function CheckoutPage() {
   if (!tour) return <div className="mx-auto min-h-[70vh] max-w-3xl px-4 py-16"><Alert>{error || 'Không tìm thấy tour.'}</Alert></div>
 
   return (
-    <section className="py-10 sm:py-14">
+    <section className="py-12 sm:py-16">
       <form onSubmit={submit} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <Link to={`/tours/${tour.id}`} className="inline-flex items-center gap-2 text-sm font-bold text-brand-700"><ArrowLeft size={17} /> Quay lại tour</Link>
-        <div className="mt-5"><p className="text-sm font-bold uppercase tracking-widest text-brand-700">Đặt chỗ an toàn</p><h1 className="mt-2 text-3xl font-black">Thông tin đoàn khách</h1><p className="mt-2 text-slate-500">Điền chính xác thông tin của từng thành viên trong đoàn.</p></div>
+        <Link to={`/tours/${tour.id}`} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-brand-700 shadow-sm transition hover:-translate-x-1"><ArrowLeft size={17} /> Quay lại tour</Link>
+        <div className="mt-7"><p className="section-kicker">Đặt chỗ an toàn</p><h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Thông tin đoàn khách</h1><p className="mt-2 text-slate-500">Điền chính xác thông tin của từng thành viên trong đoàn.</p></div>
         {error && <div className="mt-6"><Alert>{error}</Alert></div>}
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_390px]">
           <div className="space-y-6">
-            <section className="rounded-md border border-slate-200 bg-white p-5 sm:p-6">
+            <section className="surface-card rounded-3xl p-5 sm:p-7">
               <h2 className="flex items-center gap-3 text-lg font-black"><CalendarDays className="text-brand-600" /> Ngày khởi hành</h2>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {tour.departures?.map((item) => (
-                  <label key={item.id} className={`cursor-pointer rounded-md border p-4 ${String(item.id) === String(departureId) ? 'border-brand-600 bg-brand-50 ring-2 ring-brand-100' : 'border-slate-200'}`}>
+                  <label key={item.id} className={`cursor-pointer rounded-2xl border p-4 transition-all ${String(item.id) === String(departureId) ? 'border-brand-600 bg-brand-50 shadow-sm ring-2 ring-brand-100' : 'border-slate-200 hover:border-brand-300'}`}>
                     <input type="radio" name="departure" className="sr-only" value={item.id} checked={String(item.id) === String(departureId)} onChange={(event) => { setDepartureId(event.target.value); setVoucher(null) }} />
                     <span className="font-bold">{formatDate(item.startDate)} - {formatDate(item.endDate)}</span>
                     <span className="mt-2 block text-sm text-slate-500">Còn {item.remainingSeats} chỗ · {formatMoney(item.adultPrice)}</span>
@@ -175,7 +175,7 @@ export default function CheckoutPage() {
               </div>
             </section>
 
-            <section className="rounded-md border border-slate-200 bg-white p-5 sm:p-6">
+            <section className="surface-card rounded-3xl p-5 sm:p-7">
               <h2 className="flex items-center gap-3 text-lg font-black"><UserRound className="text-brand-600" /> Số lượng khách</h2>
               <div className="mt-5 divide-y divide-slate-100">
                 <div className="flex items-center justify-between py-4"><div><p className="font-bold">Người lớn</p><p className="text-sm text-slate-400">Từ 12 tuổi</p></div><Counter value={counts.adults} min={1} max={Math.max(1, maxPeople - counts.children)} onChange={(value) => syncPeople({ ...counts, adults: value })} /></div>
@@ -183,27 +183,27 @@ export default function CheckoutPage() {
               </div>
             </section>
 
-            <section className="rounded-md border border-slate-200 bg-white p-5 sm:p-6">
+            <section className="surface-card rounded-3xl p-5 sm:p-7">
               <h2 className="flex items-center gap-3 text-lg font-black"><UserRound className="text-brand-600" /> Danh sách hành khách</h2>
               <div className="mt-6 space-y-6">
                 {participantRows.map((person) => (
                   <div key={`${person.passengerType}-${person.index}`} className="border-b border-slate-100 pb-6 last:border-0 last:pb-0">
                     <p className="mb-4 font-extrabold text-brand-800">{person.label}</p>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-bold">Họ và tên</span><input required value={person.fullName} onChange={(event) => updatePerson(person.index, 'fullName', event.target.value)} className="h-11 w-full rounded border border-slate-300 px-3 outline-none focus:border-brand-600" placeholder="Như trên giấy tờ tùy thân" /></label>
-                      <label><span className="mb-1.5 block text-sm font-bold">Giới tính</span><select value={person.gender} onChange={(event) => updatePerson(person.index, 'gender', event.target.value as Gender)} className="h-11 w-full rounded border border-slate-300 bg-white px-3 outline-none focus:border-brand-600"><option value="MALE">Nam</option><option value="FEMALE">Nữ</option><option value="OTHER">Khác</option></select></label>
-                      <label><span className="mb-1.5 block text-sm font-bold">Ngày sinh</span><input required type="date" max={TODAY} value={person.dateOfBirth} onChange={(event) => updatePerson(person.index, 'dateOfBirth', event.target.value)} className="h-11 w-full rounded border border-slate-300 px-3 outline-none focus:border-brand-600" /></label>
+                      <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-bold">Họ và tên</span><input required value={person.fullName} onChange={(event) => updatePerson(person.index, 'fullName', event.target.value)} className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100" placeholder="Như trên giấy tờ tùy thân" /></label>
+                      <label><span className="mb-1.5 block text-sm font-bold">Giới tính</span><select value={person.gender} onChange={(event) => updatePerson(person.index, 'gender', event.target.value as Gender)} className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100"><option value="MALE">Nam</option><option value="FEMALE">Nữ</option><option value="OTHER">Khác</option></select></label>
+                      <label><span className="mb-1.5 block text-sm font-bold">Ngày sinh</span><input required type="date" max={TODAY} value={person.dateOfBirth} onChange={(event) => updatePerson(person.index, 'dateOfBirth', event.target.value)} className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100" /></label>
                     </div>
                   </div>
                 ))}
               </div>
             </section>
 
-            <section className="rounded-md border border-slate-200 bg-white p-5 sm:p-6"><h2 className="text-lg font-black">Ghi chú cho chuyến đi</h2><textarea rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} className="mt-4 w-full rounded border border-slate-300 p-3 outline-none focus:border-brand-600" placeholder="Ăn chay, dị ứng thực phẩm hoặc yêu cầu khác..." /></section>
+            <section className="surface-card rounded-3xl p-5 sm:p-7"><h2 className="text-lg font-black">Ghi chú cho chuyến đi</h2><textarea rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} className="mt-4 w-full rounded-xl border border-slate-200 bg-slate-50/70 p-4 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100" placeholder="Ăn chay, dị ứng thực phẩm hoặc yêu cầu khác..." /></section>
           </div>
 
-          <aside className="self-start lg:sticky lg:top-24">
-            <div className="rounded-md border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
+          <aside className="self-start lg:sticky lg:top-36">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_60px_-32px_rgba(15,64,51,.45)] sm:p-6">
               <div className="flex gap-4"><img src={assetUrl(tour.thumbnail) || FALLBACK_IMAGE} alt="" className="size-20 rounded object-cover" /><div><p className="text-xs font-bold uppercase text-brand-700">{tour.code}</p><h2 className="mt-1 line-clamp-2 font-extrabold">{tour.name}</h2></div></div>
               {selected && <p className="mt-5 flex items-center gap-2 rounded bg-slate-50 p-3 text-sm font-semibold"><CalendarDays size={17} className="text-brand-600" /> {formatDate(selected.startDate)}</p>}
               <div className="mt-5 space-y-3 border-t border-slate-100 pt-5 text-sm">
@@ -213,11 +213,11 @@ export default function CheckoutPage() {
               </div>
               <div className="mt-5">
                 <label className="mb-2 flex items-center gap-2 text-sm font-bold"><BadgePercent size={17} className="text-brand-600" /> Mã giảm giá</label>
-                <div className="flex gap-2"><input value={voucherCode} onChange={(event) => { setVoucherCode(event.target.value.toUpperCase()); setVoucher(null) }} className="h-11 min-w-0 flex-1 rounded border border-slate-300 px-3 uppercase outline-none focus:border-brand-600" placeholder="NHẬP MÃ" /><button type="button" onClick={() => void applyVoucher()} disabled={validating} className="rounded bg-slate-800 px-3 text-sm font-bold text-white disabled:opacity-60">{validating ? '...' : 'Áp dụng'}</button></div>
+                <div className="flex gap-2"><input value={voucherCode} onChange={(event) => { setVoucherCode(event.target.value.toUpperCase()); setVoucher(null) }} className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 uppercase outline-none focus:border-brand-500" placeholder="NHẬP MÃ" /><button type="button" onClick={() => void applyVoucher()} disabled={validating} className="rounded-xl bg-slate-800 px-4 text-sm font-bold text-white transition hover:bg-slate-700 disabled:opacity-60">{validating ? '...' : 'Áp dụng'}</button></div>
                 {voucher && <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-brand-700"><CheckCircle2 size={16} /> Đã giảm {formatMoney(voucher.discountAmount)}</p>}
               </div>
               <div className="mt-5 flex items-end justify-between border-t border-slate-200 pt-5"><span className="font-bold">Tổng thanh toán</span><strong className="text-2xl text-rose-600">{formatMoney(finalAmount)}</strong></div>
-              <button disabled={submitting || !selected} className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-rose-600 font-extrabold text-white hover:bg-rose-700 disabled:opacity-60"><CreditCard size={19} /> {submitting ? 'Đang tạo đơn...' : 'Đặt chỗ & thanh toán VietQR'}</button>
+              <button disabled={submitting || !selected} className="mt-5 flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 font-extrabold text-white shadow-lg shadow-rose-900/15 transition hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-60"><CreditCard size={19} /> {submitting ? 'Đang tạo đơn...' : 'Đặt chỗ & thanh toán VietQR'}</button>
               <p className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400"><ShieldCheck size={15} /> Chuyển khoản nhanh qua VietQR · Napas 247</p>
             </div>
           </aside>
