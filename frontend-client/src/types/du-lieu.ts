@@ -44,9 +44,16 @@ export interface RegisterForm extends LoginCredentials {
   phoneNumber?: string
 }
 
+export interface ContactConfirmation {
+  email: string
+  phoneNumber: string
+  currentPassword: string
+}
+
 export interface AuthContextValue extends AuthState {
   login: (credentials: LoginCredentials) => Promise<AuthState>
   register: (form: RegisterForm) => Promise<AuthState>
+  confirmContact: (form: ContactConfirmation) => Promise<AuthState>
   logout: () => void
   refresh: () => Promise<User>
 }
@@ -154,6 +161,8 @@ export interface Booking {
   numInfants: number
   numSeniors: number
   singleRoomCount: number
+  totalAmount: number
+  discountAmount: number
   depositAmount: number
   finalAmount: number
   status: BookingStatus
@@ -165,6 +174,7 @@ export interface Booking {
   checkInCode?: string
   checkedInAt?: string | null
   departure?: Departure
+  voucher?: Voucher | null
   participants?: Participant[]
   payments?: Payment[]
   review?: Review | null
@@ -210,7 +220,21 @@ export interface CheckInTicket {
 }
 
 export interface VoucherValidation {
+  voucher: Voucher
   discountAmount: number
+}
+
+export interface Voucher {
+  id: EntityId
+  code: string
+  discountType: 'PERCENT' | 'FIXED'
+  discountValue: number
+  minBookingAmount: number
+  maxUsage?: number
+  usedCount?: number
+  startDate?: string
+  endDate?: string
+  isActive?: boolean
 }
 
 export interface PaymentCreation {

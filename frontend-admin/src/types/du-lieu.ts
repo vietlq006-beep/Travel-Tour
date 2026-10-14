@@ -145,6 +145,13 @@ export type BookingStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED' | 'COM
 export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED'
 export type PaymentMethod = 'BANK_TRANSFER' | 'CASH' | 'VIETQR'
 
+export interface VoucherSummary {
+  id: EntityId
+  code: string
+  discountType: 'PERCENT' | 'FIXED'
+  discountValue: number
+}
+
 export interface Booking {
   id: EntityId
   bookingCode: string
@@ -165,6 +172,7 @@ export interface Booking {
   status: BookingStatus
   user?: User
   departure?: Departure
+  voucher?: VoucherSummary | null
   participants?: Array<{ id: EntityId; fullName: string; gender: string; dateOfBirth: string; passengerType: string }>
   payments?: Payment[]
   activities?: BookingActivity[]

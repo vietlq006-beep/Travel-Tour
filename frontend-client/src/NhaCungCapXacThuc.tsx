@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { api, dataOf } from './dich-vu-api'
 import { AuthContext } from './ngu-canh-xac-thuc'
-import type { ApiEnvelope, AuthContextValue, AuthState, LoginCredentials, RegisterForm } from './types/du-lieu'
+import type { ApiEnvelope, AuthContextValue, AuthState, ContactConfirmation, LoginCredentials, RegisterForm } from './types/du-lieu'
 
 const STORAGE_KEY = 'leviet_client_auth'
 const EMPTY_AUTH: AuthState = { user: null, token: null }
@@ -40,6 +40,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       ...auth,
       login: async (credentials: LoginCredentials) => persist(dataOf<AuthState>(await api.post<ApiEnvelope<AuthState>>('/auth/login', credentials))),
       register: async (form: RegisterForm) => persist(dataOf<AuthState>(await api.post<ApiEnvelope<AuthState>>('/auth/register', form))),
+      confirmContact: async (form: ContactConfirmation) => persist(dataOf<AuthState>(await api.put<ApiEnvelope<AuthState>>('/auth/contact', form))),
       logout: () => {
         localStorage.removeItem(STORAGE_KEY)
         setAuth(EMPTY_AUTH)

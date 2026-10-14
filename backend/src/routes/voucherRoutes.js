@@ -5,6 +5,7 @@ const validate = require('../middlewares/validateRequest');
 const { authenticateToken, authorizeRoles } = require('../middlewares/authMiddleware');
 const { validateVoucher } = require('../validators/voucherValidator');
 const { validateIdParam, validatePagination } = require('../validators/commonValidator');
+router.get('/public', wrap(c.listPublished));
 router.use(authenticateToken);
 router.post('/validate', validate((req) => {
   const errors = [];

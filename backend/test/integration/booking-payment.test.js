@@ -6,7 +6,7 @@ const paymentService = require('../../src/services/paymentService');
 
 const marker = `FLOW-${Date.now()}`;
 let adminToken; let customerToken;
-let categoryId; let destinationId; let tourId; let departureId; let voucherId; let bookingId; let paymentId;
+let categoryId; let destinationId; let tourId; let departureId; let voucherId; let inactiveVoucherId; let bookingId; let paymentId;
 let rejectedBookingId; let rejectedPaymentId;
 let expiredBookingId; let reconciledBookingId; let reconciledPaymentId; let reconciliationEventId;
 
@@ -29,6 +29,11 @@ before(async () => {
     code: marker, discountType: 'PERCENT', discountValue: 10, minBookingAmount: 0, maxUsage: 10,
     startDate: new Date(Date.now() - 86400000).toISOString(), endDate: new Date(Date.now() + 30 * 86400000).toISOString()
   })).body.data.id;
+  inactiveVoucherId = (await api.post('/api/vouchers').set(auth(adminToken)).send({
+    code: `${marker}-OFF`, discountType: 'FIXED', discountValue: 100000, minBookingAmount: 0, maxUsage: 10,
+    startDate: new Date(Date.now() - 86400000).toISOString(), endDate: new Date(Date.now() + 30 * 86400000).toISOString(),
+    isActive: false
+  })).body.data.id;
 });
 
 after(async () => {
@@ -45,7 +50,17 @@ after(async () => {
   if (destinationId) await db.Destination.destroy({ where: { id: destinationId }, force: true });
   if (categoryId) await db.Category.destroy({ where: { id: categoryId }, force: true });
   if (voucherId) await db.Voucher.destroy({ where: { id: voucherId } });
+  if (inactiveVoucherId) await db.Voucher.destroy({ where: { id: inactiveVoucherId } });
   await closeDatabase();
+});
+
+test('trang chủ chỉ nhận voucher được cấp phép, còn hạn và còn lượt', async () => {
+  const response = await api.get('/api/vouchers/public').expect(200);
+  assert.equal(response.body.data.some((item) => item.code === marker), true);
+  assert.equal(response.body.data.some((item) => item.code === `${marker}-OFF`), false);
+  await api.post('/api/vouchers/validate').set(auth(customerToken)).send({
+    code: `${marker}-OFF`, totalAmount: 3000000
+  }).expect(422);
 });
 
 test('khách đặt chỗ và hệ thống tính giá voucher phía máy chủ', async () => {
@@ -60,6 +75,9 @@ test('khách đặt chỗ và hệ thống tính giá voucher phía máy chủ',
   assert.equal(Number(response.body.data.totalAmount), 3000000);
   assert.equal(Number(response.body.data.discountAmount), 300000);
   assert.equal(Number(response.body.data.finalAmount), 2700000);
+  const detail = await api.get(`/api/bookings/${bookingId}`).set(auth(customerToken)).expect(200);
+  assert.equal(detail.body.data.voucher.code, marker);
+  assert.equal(Number(detail.body.data.discountAmount), 300000);
   assert.equal((await db.TourDeparture.findByPk(departureId)).bookedSeats, 2);
 });
 
@@ -70,6 +88,10 @@ test('thanh toán thành công tự xác nhận đơn', async () => {
   assert.equal(created.body.data.vietQr.accountName, 'Lê Quốc Việt');
   assert.equal(created.body.data.vietQr.amount, 2700000);
   assert.match(created.body.data.vietQr.qrImageUrl, /^https:\/\/img\.vietqr\.io\/image\/970407-9330302005-print\.png\?/);
+  const paymentList = await api.get('/api/payments').set(auth(adminToken)).query({ status: 'PENDING', page: 1, limit: 100 }).expect(200);
+  const listedPayment = paymentList.body.data.items.find((item) => item.id === paymentId);
+  assert.equal(listedPayment.booking.voucher.code, marker);
+  assert.equal(Number(listedPayment.booking.discountAmount), 300000);
   const reopened = await api.post('/api/payments').set(auth(customerToken)).send({ bookingId, paymentMethod: 'VIETQR' }).expect(201);
   assert.equal(reopened.body.data.payment.id, paymentId);
   await api.patch(`/api/payments/${paymentId}/status`).set(auth(adminToken)).send({ status: 'SUCCESS', transactionId: marker }).expect(200);

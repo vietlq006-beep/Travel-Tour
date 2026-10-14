@@ -137,6 +137,7 @@ class BookingService {
         ...(departureWhere && { where: departureWhere, required: true }),
         include: [{ model: Tour, as: 'tour', attributes: ['id', 'code', 'name', 'thumbnail'] }]
       },
+      { model: Voucher, as: 'voucher', attributes: ['id', 'code', 'discountType', 'discountValue'] },
       ...(user.role === 'ADMIN' ? [{ model: User, as: 'user', attributes: ['id', 'fullName', 'email', 'phoneNumber'] }] : []),
       ...(query.paymentStatus ? [{ model: Payment, as: 'payments', where: { status: query.paymentStatus }, attributes: ['id', 'status'], required: true }] : [])
     ];

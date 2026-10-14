@@ -1,9 +1,9 @@
-import { ArrowRight, BadgeCheck, CalendarCheck, Check, Headphones, MapPin, Search, ShieldCheck, Sparkles, Star, UsersRound, type LucideIcon } from 'lucide-react'
+import { ArrowRight, BadgeCheck, CalendarCheck, Check, Copy, Headphones, MapPin, Search, ShieldCheck, Sparkles, Star, TicketPercent, UsersRound, type LucideIcon } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { api, dataOf } from '../dich-vu-api'
+import { api, dataOf, formatDate, formatMoney } from '../dich-vu-api'
 import { LoadingGrid, TourCard } from '../components/DungChung'
-import type { ApiEnvelope, Destination, PaginatedResult, Tour } from '../types/du-lieu'
+import type { ApiEnvelope, Destination, PaginatedResult, Tour, Voucher } from '../types/du-lieu'
 
 interface Benefit { icon: LucideIcon; title: string; text: string }
 
@@ -22,7 +22,10 @@ const numbers = [
 export default function HomePage() {
   const [tours, setTours] = useState<Tour[]>([])
   const [destinations, setDestinations] = useState<Destination[]>([])
+  const [vouchers, setVouchers] = useState<Voucher[]>([])
+  const [copiedVoucher, setCopiedVoucher] = useState('')
   const [loading, setLoading] = useState(true)
+  const [voucherLoading, setVoucherLoading] = useState(true)
   const [search, setSearch] = useState({ keyword: '', destinationId: '', maxPrice: '' })
   const navigate = useNavigate()
 
@@ -34,7 +37,18 @@ export default function HomePage() {
       setTours(dataOf(tourResponse).items || [])
       setDestinations(dataOf(destinationResponse).items || [])
     }).finally(() => setLoading(false))
+
+    api.get<ApiEnvelope<Voucher[]>>('/vouchers/public')
+      .then((response) => setVouchers(dataOf(response) || []))
+      .catch(() => setVouchers([]))
+      .finally(() => setVoucherLoading(false))
   }, [])
+
+  const copyVoucher = async (code: string) => {
+    await navigator.clipboard.writeText(code)
+    setCopiedVoucher(code)
+    window.setTimeout(() => setCopiedVoucher((current) => current === code ? '' : current), 1800)
+  }
 
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -77,6 +91,28 @@ export default function HomePage() {
 
       <section className="relative z-10 bg-white py-12 sm:py-16">
         <div className="mx-auto grid max-w-7xl gap-5 px-4 sm:px-6 md:grid-cols-3 lg:px-8">{benefits.map(({ icon: Icon, title, text }, index) => <div key={title} className="group rounded-3xl border border-slate-100 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-brand-100 hover:bg-brand-50/40 hover:shadow-xl hover:shadow-emerald-900/5"><div className="flex items-start gap-4"><span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-700 transition group-hover:bg-brand-700 group-hover:text-white"><Icon size={22} /></span><span className="pt-1 text-xs font-black text-slate-300">0{index + 1}</span></div><h2 className="mt-5 text-lg font-black">{title}</h2><p className="mt-2 text-sm leading-6 text-slate-500">{text}</p></div>)}</div>
+      </section>
+
+      <section className="relative z-10 border-y border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-orange-50 py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div><p className="section-kicker">Ưu đãi đang lưu hành</p><h2 className="mt-3 text-3xl font-black tracking-tight text-ink sm:text-4xl">Voucher dành cho hành trình mới</h2><p className="mt-3 max-w-2xl text-slate-500">Sao chép mã ưu đãi và nhập tại bước thanh toán để được giảm giá tương ứng.</p></div>
+            <Link to="/tours" className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-5 py-3 text-sm font-extrabold text-brand-700 shadow-sm transition hover:border-brand-300 hover:shadow-md">Chọn tour để áp dụng <ArrowRight size={17} /></Link>
+          </div>
+          {voucherLoading ? <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 3 }, (_, index) => <div key={index} className="skeleton-shimmer h-52 rounded-3xl bg-slate-200" />)}</div> : vouchers.length > 0 ? <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {vouchers.map((voucher) => {
+              const discount = voucher.discountType === 'PERCENT' ? `${Number(voucher.discountValue)}%` : formatMoney(voucher.discountValue)
+              const remaining = Math.max(0, Number(voucher.maxUsage || 0) - Number(voucher.usedCount || 0))
+              return <article key={voucher.id} className="group relative overflow-hidden rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/10">
+                <span className="absolute -right-8 -top-8 size-28 rounded-full bg-emerald-100/70 transition group-hover:scale-125" />
+                <div className="relative flex items-start justify-between gap-4"><span className="grid size-12 place-items-center rounded-2xl bg-brand-700 text-white shadow-lg shadow-emerald-900/15"><TicketPercent size={24} /></span><span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-black text-rose-600">GIẢM {discount}</span></div>
+                <div className="relative mt-5"><p className="text-xs font-bold uppercase tracking-[.16em] text-slate-400">Mã ưu đãi</p><p className="mt-1 font-mono text-2xl font-black tracking-wider text-brand-800">{voucher.code}</p></div>
+                <div className="relative mt-4 space-y-1 text-sm text-slate-500"><p>Đơn tối thiểu: <strong className="text-slate-700">{formatMoney(voucher.minBookingAmount)}</strong></p>{voucher.endDate && <p>Hạn dùng: <strong className="text-slate-700">{formatDate(voucher.endDate)}</strong></p>}<p>Còn <strong className="text-brand-700">{remaining}</strong> lượt sử dụng</p></div>
+                <button type="button" onClick={() => void copyVoucher(voucher.code)} className="relative mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-brand-300 bg-brand-50 font-extrabold text-brand-700 transition hover:bg-brand-700 hover:text-white"><Copy size={16} /> {copiedVoucher === voucher.code ? 'Đã sao chép mã' : 'Sao chép mã voucher'}</button>
+              </article>
+            })}
+          </div> : <div className="rounded-3xl border border-dashed border-emerald-200 bg-white/80 px-6 py-10 text-center"><TicketPercent className="mx-auto text-brand-600" size={32} /><p className="mt-3 font-extrabold text-slate-700">Hiện chưa có voucher đang lưu hành</p><p className="mt-1 text-sm text-slate-500">Các mã được quản trị viên cấp phép sẽ xuất hiện tại đây.</p></div>}
+        </div>
       </section>
 
       <section className="py-20 sm:py-24">

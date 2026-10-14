@@ -37,6 +37,7 @@ export default function Layout() {
   const links = (
     <>
       <NavLink to="/" className={navClass} onClick={() => { setMobileOpen(false); setAccountOpen(false) }}>Trang chủ</NavLink>
+      <NavLink to="/information" className={navClass} onClick={() => { setMobileOpen(false); setAccountOpen(false) }}>Thông tin</NavLink>
       <NavLink to="/tours" className={navClass} onClick={() => { setMobileOpen(false); setAccountOpen(false) }}>Tour du lịch</NavLink>
       <NavLink to="/saved-tours" className={navClass} onClick={() => { setMobileOpen(false); setAccountOpen(false) }}>Tour đã lưu</NavLink>
       {user && <NavLink to="/my-bookings" className={navClass} onClick={() => { setMobileOpen(false); setAccountOpen(false) }}>Đơn của tôi</NavLink>}
@@ -107,7 +108,7 @@ export default function Layout() {
           <div className="grid gap-10 pb-12 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.15fr]">
             <div><Brand light /><p className="mt-5 max-w-sm text-sm leading-7 text-emerald-100/65">Chúng tôi thiết kế những hành trình vừa đủ trải nghiệm, rõ ràng từng chi tiết và tận tâm trong mọi điểm chạm.</p><div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-emerald-100/70"><ShieldCheck size={15} className="text-emerald-300" /> Đồng hành an tâm trên mọi hành trình</div></div>
             <div><p className="font-extrabold text-white">Khám phá</p><div className="mt-5 flex flex-col gap-3 text-sm text-emerald-100/65"><Link className="transition hover:translate-x-1 hover:text-white" to="/tours">Tất cả tour</Link><Link className="transition hover:translate-x-1 hover:text-white" to="/my-bookings">Đơn của tôi</Link><Link className="transition hover:translate-x-1 hover:text-white" to="/register">Tạo tài khoản</Link></div></div>
-            <div><p className="font-extrabold text-white">Thông tin</p><div className="mt-5 flex flex-col gap-3 text-sm text-emerald-100/65"><span>Về Lê Việt Travel</span><span>Chính sách đặt tour</span><span>Điều khoản sử dụng</span></div></div>
+            <div><p className="font-extrabold text-white">Thông tin</p><div className="mt-5 flex flex-col gap-3 text-sm text-emerald-100/65"><Link className="transition hover:translate-x-1 hover:text-white" to="/information#ve-le-viet-travel">Về Lê Việt Travel</Link><Link className="transition hover:translate-x-1 hover:text-white" to="/information#chinh-sach-dat-tour">Chính sách đặt tour</Link><Link className="transition hover:translate-x-1 hover:text-white" to="/information#dieu-khoan-su-dung">Điều khoản sử dụng</Link></div></div>
             <div><p className="font-extrabold text-white">Liên hệ</p><div className="mt-5 space-y-4 text-sm text-emerald-100/65"><a href="tel:19001234" className="flex items-center gap-3 hover:text-white"><Headphones size={17} className="text-emerald-300" /> 1900 1234</a><a href="mailto:hello@leviettravel.vn" className="flex items-center gap-3 hover:text-white"><Mail size={17} className="text-emerald-300" /> hello@leviettravel.vn</a><p className="flex items-center gap-3"><MapPin size={17} className="text-emerald-300" /> Đà Nẵng, Việt Nam</p></div></div>
           </div>
         </div>

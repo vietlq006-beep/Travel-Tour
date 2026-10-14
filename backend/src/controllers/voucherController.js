@@ -1,6 +1,7 @@
 const service = require('../services/voucherService');
 const ApiResponse = require('../utils/apiResponse');
 module.exports = {
+  listPublished: async (req, res) => ApiResponse.success(res, 'Lấy voucher đang lưu hành thành công', await service.listPublished()),
   list: async (req, res) => ApiResponse.success(res, 'Lấy danh sách voucher thành công', await service.list(req.query)),
   get: async (req, res) => ApiResponse.success(res, 'Lấy voucher thành công', await service.get(req.params.id)),
   create: async (req, res) => ApiResponse.created(res, 'Tạo voucher thành công', await service.create(req.body)),

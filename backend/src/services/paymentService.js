@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { sequelize, Payment, Booking, User, TourDeparture, Tour, BookingActivity, PaymentReconciliationEvent } = require('../models');
+const { sequelize, Payment, Booking, User, TourDeparture, Tour, Voucher, BookingActivity, PaymentReconciliationEvent } = require('../models');
 const { PAYMENT_METHOD, PAYMENT_STATUS } = require('../constants/paymentMethod');
 const { createVietQrData } = require('./vietQrService');
 const { getPagination, toPaginatedResult } = require('../utils/pagination');
@@ -19,9 +19,10 @@ class PaymentService {
       include: [{
         model: Booking,
         as: 'booking',
-        attributes: ['id', 'bookingCode', 'bookingDate', 'finalAmount', 'depositAmount', 'status'],
+        attributes: ['id', 'bookingCode', 'bookingDate', 'voucherId', 'totalAmount', 'discountAmount', 'finalAmount', 'depositAmount', 'status'],
         include: [
           { model: User, as: 'user', attributes: ['id', 'fullName', 'email', 'phoneNumber'] },
+          { model: Voucher, as: 'voucher', attributes: ['id', 'code', 'discountType', 'discountValue'] },
           {
             model: TourDeparture,
             as: 'departure',

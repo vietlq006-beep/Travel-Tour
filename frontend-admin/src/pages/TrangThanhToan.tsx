@@ -103,6 +103,7 @@ export function PaymentsPage() {
     { title: 'Khách hàng', render: (_, record) => <div><Typography.Text strong>{record.booking?.user?.fullName || '-'}</Typography.Text><Typography.Text type="secondary" className="payment-customer-email">{record.booking?.user?.email || ''}</Typography.Text></div>, width: 220 },
     { title: 'Tour', render: (_, record) => record.booking?.departure?.tour?.name || '-', minWidth: 240 },
     { title: 'Ngày đặt', render: (_, record) => formatDate(record.booking?.bookingDate), width: 120 },
+    { title: 'Voucher / giảm giá', render: (_, record) => Number(record.booking?.discountAmount || 0) > 0 ? <div><Tag color="green">{record.booking?.voucher?.code}</Tag><br /><Typography.Text type="success">-{formatMoney(record.booking?.discountAmount || 0)}</Typography.Text></div> : '-', width: 165 },
     { title: 'Số tiền', dataIndex: 'amount', render: (value: number) => <Typography.Text strong>{formatMoney(value)}</Typography.Text>, width: 155 },
     { title: 'Chứng từ', render: (_, record) => record.proofUrl ? <a href={`${api.defaults.baseURL?.replace(/\/api\/?$/, '')}${record.proofUrl}`} target="_blank" rel="noreferrer">Xem ảnh</a> : '-', width: 100 },
   ]

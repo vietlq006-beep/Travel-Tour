@@ -8,6 +8,7 @@ const AuthPage = lazy(() => import('./pages/TrangXacThuc'))
 const BookingsPage = lazy(() => import('./pages/TrangDonDat'))
 const CheckoutPage = lazy(() => import('./pages/TrangThanhToan'))
 const HomePage = lazy(() => import('./pages/TrangChu'))
+const InformationPage = lazy(() => import('./pages/TrangThongTin'))
 const TourDetailPage = lazy(() => import('./pages/TrangChiTietTour'))
 const ToursPage = lazy(() => import('./pages/TrangDanhSachTour'))
 const ProfilePage = lazy(() => import('./pages/TrangHoSo'))
@@ -54,6 +55,7 @@ export default function App() {
           <Routes>
             <Route element={<Layout />}>
               <Route index element={<HomePage />} />
+              <Route path="information" element={<InformationPage />} />
               <Route path="tours" element={<ToursPage />} />
               <Route path="tours/:id" element={<TourDetailPage />} />
               <Route path="login" element={<AuthPage mode="login" />} />

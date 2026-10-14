@@ -102,7 +102,7 @@ export function BookingsPage() {
     { title: 'Khách hàng', width: 220, render: (_, item) => <div><Typography.Text strong>{item.user?.fullName || '-'}</Typography.Text><br /><Typography.Text type="secondary">{item.user?.phoneNumber || item.user?.email}</Typography.Text></div> },
     { title: 'Tour / khởi hành', minWidth: 270, render: (_, item) => <div><Typography.Text>{item.departure?.tour?.name || '-'}</Typography.Text><br /><Typography.Text type="secondary">{formatDate(item.departure?.startDate)}</Typography.Text></div> },
     { title: 'Khách', width: 90, render: (_, item) => Number(item.numAdults || 0) + Number(item.numChildren || 0) + Number(item.numInfants || 0) + Number(item.numSeniors || 0) },
-    { title: 'Thành tiền', dataIndex: 'finalAmount', width: 145, render: (value) => <Typography.Text strong>{formatMoney(value)}</Typography.Text> },
+    { title: 'Thành tiền', width: 165, render: (_, item) => <div><Typography.Text strong>{formatMoney(item.finalAmount)}</Typography.Text>{Number(item.discountAmount || 0) > 0 && <><br /><Tag color="green">Giảm {formatMoney(item.discountAmount)}</Tag></>}</div> },
     { title: 'Trạng thái', dataIndex: 'status', width: 145, render: (value) => <StatusTag value={value} /> },
     { title: 'Thao tác', fixed: 'right', width: 250, render: (_, item) => <Space wrap><Button icon={<EyeOutlined />} onClick={() => void loadDetail(item.id)}>Chi tiết</Button>{item.status === 'PENDING_PAYMENT' && <Button type="primary" icon={<CheckCircleOutlined />} onClick={() => updateStatus(item, 'CONFIRMED')}>Xác nhận</Button>}{item.status === 'CONFIRMED' && <Button type="primary" icon={<FileDoneOutlined />} onClick={() => updateStatus(item, 'COMPLETED')}>Hoàn tất</Button>}{['PENDING_PAYMENT', 'CONFIRMED'].includes(item.status) && <Button danger icon={<StopOutlined />} onClick={() => updateStatus(item, 'CANCELLED')} />}</Space> },
   ]
@@ -131,7 +131,10 @@ export function BookingsPage() {
           { key: 'status', label: 'Trạng thái', children: <StatusTag value={detail.status} /> },
           { key: 'tour', label: 'Tour', children: detail.departure?.tour?.name },
           { key: 'date', label: 'Khởi hành', children: formatDate(detail.departure?.startDate) },
-          { key: 'amount', label: 'Tổng tiền', children: formatMoney(detail.finalAmount) },
+          { key: 'subtotal', label: 'Tạm tính', children: formatMoney(detail.totalAmount || detail.finalAmount) },
+          { key: 'voucher', label: 'Voucher', children: detail.voucher?.code ? <Tag color="green">{detail.voucher.code}</Tag> : 'Không áp dụng' },
+          { key: 'discount', label: 'Giảm giá', children: <Typography.Text type={Number(detail.discountAmount || 0) > 0 ? 'success' : undefined}>-{formatMoney(detail.discountAmount || 0)}</Typography.Text> },
+          { key: 'amount', label: 'Thành tiền', children: <Typography.Text strong>{formatMoney(detail.finalAmount)}</Typography.Text> },
           { key: 'deposit', label: 'Tiền cọc', children: formatMoney(detail.depositAmount || detail.finalAmount) },
         ]} />
         <Card size="small" title="Hành khách"><Table size="small" rowKey="id" pagination={false} dataSource={detail.participants} columns={[{ title: 'Họ tên', dataIndex: 'fullName' }, { title: 'Loại', dataIndex: 'passengerType' }, { title: 'Ngày sinh', dataIndex: 'dateOfBirth', render: formatDate }, { title: 'Giới tính', dataIndex: 'gender' }]} /></Card>

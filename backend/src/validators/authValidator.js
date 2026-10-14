@@ -46,7 +46,23 @@ const validateVerificationToken = (req) => typeof req.body.token === 'string' &&
 const validatePhoneVerification = (req) => phonePattern.test(req.body.phoneNumber || '')
   ? [] : [{ field: 'phoneNumber', message: 'Số điện thoại không hợp lệ' }];
 
+const vietnamPhonePattern = /^(?:\+84|0)(?:3|5|7|8|9)\d{8}$/;
+const validateContactConfirmation = (req) => {
+  const errors = [];
+  if (typeof req.body.email !== 'string' || !emailPattern.test(req.body.email.trim())) {
+    errors.push({ field: 'email', message: 'Email không đúng định dạng' });
+  }
+  if (typeof req.body.phoneNumber !== 'string' || !vietnamPhonePattern.test(req.body.phoneNumber.trim())) {
+    errors.push({ field: 'phoneNumber', message: 'Số điện thoại Việt Nam không đúng định dạng' });
+  }
+  if (typeof req.body.currentPassword !== 'string' || !req.body.currentPassword) {
+    errors.push({ field: 'currentPassword', message: 'Vui lòng nhập mật khẩu để xác nhận thay đổi' });
+  }
+  return errors;
+};
+
 module.exports = {
   validateRegister, validateLogin, validateProfile, validateForgotPassword,
-  validateResetPassword, validateVerificationToken, validatePhoneVerification
+  validateResetPassword, validateVerificationToken, validatePhoneVerification,
+  validateContactConfirmation
 };

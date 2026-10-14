@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { App as AntApp, Button, Card, DatePicker, Drawer, Form, Input, InputNumber, Select, Space, Switch, Table, Tabs } from 'antd'
+import { App as AntApp, Button, Card, DatePicker, Drawer, Form, Input, InputNumber, Select, Space, Switch, Table, Tabs, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useState } from 'react'
@@ -18,7 +18,7 @@ const SPECS: Array<{ key: string; label: string; endpoint: string; titleField: s
   { key: 'hotels', label: 'Khách sạn', endpoint: '/hotels', titleField: 'name', fields: [{ name: 'name', label: 'Tên khách sạn', required: true }, { name: 'address', label: 'Địa chỉ', required: true }, { name: 'starRating', label: 'Hạng sao', type: 'number', required: true }, { name: 'contactPhone', label: 'Điện thoại' }] },
   { key: 'vehicles', label: 'Phương tiện', endpoint: '/vehicles', titleField: 'licensePlate', fields: [{ name: 'vehicleType', label: 'Loại phương tiện', required: true }, { name: 'licensePlate', label: 'Biển số', required: true }, { name: 'seatCapacity', label: 'Sức chứa', type: 'number', required: true }] },
   { key: 'guides', label: 'Hướng dẫn viên', endpoint: '/tour-guides', titleField: 'fullName', fields: [{ name: 'fullName', label: 'Họ tên', required: true }, { name: 'phoneNumber', label: 'Điện thoại', required: true }, { name: 'email', label: 'Email' }, { name: 'experienceYears', label: 'Số năm kinh nghiệm', type: 'number' }, { name: 'languages', label: 'Ngôn ngữ' }, { name: 'isActive', label: 'Đang hoạt động', type: 'boolean' }] },
-  { key: 'vouchers', label: 'Voucher', endpoint: '/vouchers', titleField: 'code', fields: [{ name: 'code', label: 'Mã voucher', required: true }, { name: 'discountType', label: 'Loại giảm', type: 'select', required: true, options: [{ value: 'PERCENT', label: 'Phần trăm' }, { value: 'FIXED', label: 'Số tiền' }] }, { name: 'discountValue', label: 'Giá trị giảm', type: 'number', required: true }, { name: 'minBookingAmount', label: 'Đơn tối thiểu', type: 'number' }, { name: 'maxUsage', label: 'Lượt dùng tối đa', type: 'number', required: true }, { name: 'startDate', label: 'Bắt đầu', type: 'date', required: true }, { name: 'endDate', label: 'Kết thúc', type: 'date', required: true }, { name: 'isActive', label: 'Đang hoạt động', type: 'boolean' }] },
+  { key: 'vouchers', label: 'Voucher', endpoint: '/vouchers', titleField: 'code', fields: [{ name: 'code', label: 'Mã voucher', required: true }, { name: 'discountType', label: 'Loại giảm', type: 'select', required: true, options: [{ value: 'PERCENT', label: 'Phần trăm' }, { value: 'FIXED', label: 'Số tiền' }] }, { name: 'discountValue', label: 'Giá trị giảm', type: 'number', required: true }, { name: 'minBookingAmount', label: 'Đơn tối thiểu', type: 'number' }, { name: 'maxUsage', label: 'Lượt dùng tối đa', type: 'number', required: true }, { name: 'startDate', label: 'Bắt đầu', type: 'date', required: true }, { name: 'endDate', label: 'Kết thúc', type: 'date', required: true }, { name: 'isActive', label: 'Cấp phép lưu hành', type: 'boolean' }] },
 ]
 
 function ResourceManager({ spec }: { spec: typeof SPECS[number] }) {
@@ -29,7 +29,7 @@ function ResourceManager({ spec }: { spec: typeof SPECS[number] }) {
   const [form] = Form.useForm<Record<string, unknown>>()
   const start = (record?: ResourceRecord) => {
     setEditing(record || null)
-    const values: Record<string, unknown> = { isActive: true, starRating: 3, maxUsage: 100, ...record }
+    const values: Record<string, unknown> = { isActive: spec.key === 'vouchers' ? false : true, starRating: 3, maxUsage: 100, ...record }
     spec.fields.filter((field) => field.type === 'date').forEach((field) => { if (values[field.name]) values[field.name] = dayjs(String(values[field.name])) })
     form.setFieldsValue(values); setOpen(true)
   }
@@ -43,9 +43,11 @@ function ResourceManager({ spec }: { spec: typeof SPECS[number] }) {
     } catch (error) { void message.error(getErrorMessage(error)) }
   }
   const remove = (record: ResourceRecord) => modal.confirm({ title: `Xóa ${String(record[spec.titleField] || record.id)}?`, okButtonProps: { danger: true }, okText: 'Xóa', cancelText: 'Đóng', async onOk() { await api.delete(`${spec.endpoint}/${record.id}`); void message.success('Đã xóa hoặc ngừng sử dụng'); await resource.load() } })
+  const statusField = spec.fields.find((field) => field.type === 'boolean')
   const columns: ColumnsType<ResourceRecord> = [
     { title: spec.fields[0].label, dataIndex: spec.fields[0].name },
     ...spec.fields.slice(1, 4).map((field) => ({ title: field.label, dataIndex: field.name, ellipsis: true, render: (value: unknown) => typeof value === 'boolean' ? (value ? 'Có' : 'Không') : String(value ?? '-') })),
+    ...(statusField ? [{ title: statusField.label, dataIndex: statusField.name, width: 165, render: (value: unknown) => <Tag color={value ? 'success' : 'default'}>{spec.key === 'vouchers' ? (value ? 'Đang lưu hành' : 'Chưa cấp phép') : (value ? 'Đang hoạt động' : 'Ngừng hoạt động')}</Tag> }] : []),
     { title: 'Thao tác', width: 110, render: (_, record) => <Space><Button icon={<EditOutlined />} onClick={() => start(record)} /><Button danger icon={<DeleteOutlined />} onClick={() => remove(record)} /></Space> },
   ]
   return <Card title={`Quản trị ${spec.label.toLowerCase()}`} extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => start()}>Thêm mới</Button>}><Table rowKey="id" loading={resource.loading} dataSource={resource.items} columns={columns} scroll={{ x: 800 }} pagination={{ current: resource.pagination.page, pageSize: resource.pagination.limit, total: resource.pagination.totalItems, onChange: (page, limit) => void resource.load({ page, limit }) }} /><Drawer title={`${editing ? 'Cập nhật' : 'Thêm'} ${spec.label.toLowerCase()}`} width={500} open={open} onClose={() => setOpen(false)}><Form form={form} layout="vertical" onFinish={(values) => void submit(values)}>{spec.fields.map((field) => <Form.Item key={field.name} name={field.name} label={field.label} valuePropName={field.type === 'boolean' ? 'checked' : 'value'} rules={[{ required: field.required }]}>{field.type === 'number' ? <InputNumber min={0} style={{ width: '100%' }} /> : field.type === 'textarea' ? <Input.TextArea rows={4} /> : field.type === 'select' ? <Select options={field.options} /> : field.type === 'boolean' ? <Switch /> : field.type === 'date' ? <DatePicker style={{ width: '100%' }} /> : <Input />}</Form.Item>)}<Button block type="primary" htmlType="submit">Lưu dữ liệu</Button></Form></Drawer></Card>

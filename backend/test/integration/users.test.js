@@ -18,6 +18,27 @@ test('admin quản lý khách hàng và khách không thể truy cập API quả
   const customerId = registerResponse.body.data.user.id;
   context.after(() => db.User.destroy({ where: { id: customerId }, force: true }));
 
+  await api.put('/api/auth/contact').set(auth(customerToken)).send({
+    email: 'email-sai',
+    phoneNumber: '123',
+    currentPassword: password
+  }).expect(422);
+
+  await api.put('/api/auth/contact').set(auth(customerToken)).send({
+    email,
+    phoneNumber: '0901234567',
+    currentPassword: 'SaiMatKhau@123'
+  }).expect(401);
+
+  const contactResponse = await api.put('/api/auth/contact').set(auth(customerToken)).send({
+    email,
+    phoneNumber: '0901234567',
+    currentPassword: password
+  }).expect(200);
+  assert.ok(contactResponse.body.data.token);
+  assert.ok(contactResponse.body.data.user.emailVerifiedAt);
+  assert.ok(contactResponse.body.data.user.phoneVerifiedAt);
+
   await api.get('/api/users').set(auth(customerToken)).expect(403);
 
   const adminToken = await login();

@@ -107,6 +107,7 @@ export default function CheckoutPage() {
         totalAmount: subtotal,
       }))
       setVoucher(result)
+      setVoucherCode(result.voucher.code)
     } catch (requestError) {
       setError(apiError(requestError, 'Mã giảm giá không hợp lệ.'))
     } finally {
@@ -233,8 +234,9 @@ export default function CheckoutPage() {
               <div className="mt-5">
                 <label className="mb-2 flex items-center gap-2 text-sm font-bold"><BadgePercent size={17} className="text-brand-600" /> Mã giảm giá</label>
                 <div className="flex gap-2"><input value={voucherCode} onChange={(event) => { setVoucherCode(event.target.value.toUpperCase()); setVoucher(null) }} className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 uppercase outline-none focus:border-brand-500" placeholder="NHẬP MÃ" /><button type="button" onClick={() => void applyVoucher()} disabled={validating} className="rounded-xl bg-slate-800 px-4 text-sm font-bold text-white transition hover:bg-slate-700 disabled:opacity-60">{validating ? '...' : 'Áp dụng'}</button></div>
-                {voucher && <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-brand-700"><CheckCircle2 size={16} /> Đã giảm {formatMoney(voucher.discountAmount)}</p>}
+                {voucher && <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-brand-700"><CheckCircle2 size={16} /> Voucher {voucher.voucher.code} đã được áp dụng</p>}
               </div>
+              {voucher && <div className="mt-4 flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-bold text-emerald-800"><span>Giảm giá ({voucher.voucher.code})</span><span>-{formatMoney(voucher.discountAmount)}</span></div>}
               <div className="mt-5 flex items-end justify-between border-t border-slate-200 pt-5"><span className="font-bold">Tổng thanh toán</span><strong className="text-2xl text-rose-600">{formatMoney(finalAmount)}</strong></div>
               <button disabled={submitting || !selected} className="mt-5 flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 font-extrabold text-white shadow-lg shadow-rose-900/15 transition hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-60"><CreditCard size={19} /> {submitting ? 'Đang tạo đơn...' : 'Đặt chỗ & thanh toán VietQR'}</button>
               <p className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400"><ShieldCheck size={15} /> Chuyển khoản nhanh qua VietQR · Napas 247</p>

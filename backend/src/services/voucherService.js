@@ -1,8 +1,23 @@
-const { Op } = require('sequelize');
+const { Op, col } = require('sequelize');
 const { Voucher, Booking } = require('../models');
 const AppError = require('../utils/appError');
 const { getPagination, toPaginatedResult } = require('../utils/pagination');
 class VoucherService {
+  async listPublished() {
+    const now = new Date();
+    return Voucher.findAll({
+      where: {
+        isActive: true,
+        startDate: { [Op.lte]: now },
+        endDate: { [Op.gte]: now },
+        maxUsage: { [Op.gt]: col('used_count') }
+      },
+      attributes: ['id', 'code', 'discountType', 'discountValue', 'minBookingAmount', 'maxUsage', 'usedCount', 'startDate', 'endDate'],
+      order: [['endDate', 'ASC'], ['createdAt', 'DESC']],
+      limit: 8
+    });
+  }
+
   async list(query) {
     const { page, limit, offset } = getPagination(query);
     const where = query.keyword ? { code: { [Op.like]: `%${query.keyword.trim()}%` } } : {};

@@ -51,6 +51,15 @@ class AuthController {
     }
   }
 
+  async confirmContact(req, res, next) {
+    try {
+      const result = await authService.confirmContact(req.user.id, req.body);
+      return ApiResponse.success(res, 'Xác nhận thông tin liên hệ thành công', result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async forgotPassword(req, res, next) {
     try {
       const result = await authService.requestPasswordReset(req.body.email);

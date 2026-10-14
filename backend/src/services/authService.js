@@ -173,6 +173,32 @@ class AuthService {
     return user;
   }
 
+  async confirmContact(userId, contactData) {
+    const user = await User.findByPk(userId);
+    if (!user) throw new AppError('Không tìm thấy người dùng.', 404);
+    if (!await user.comparePassword(contactData.currentPassword)) {
+      throw new AppError('Mật khẩu xác nhận không chính xác.', 401);
+    }
+
+    const email = contactData.email.trim().toLowerCase();
+    const phoneNumber = contactData.phoneNumber.trim();
+    const duplicatedEmail = await User.findOne({
+      where: { email, id: { [Op.ne]: user.id } },
+      attributes: ['id']
+    });
+    if (duplicatedEmail) throw new AppError('Email này đã được sử dụng bởi tài khoản khác.', 409, [
+      { field: 'email', message: 'Email đã tồn tại' }
+    ]);
+
+    await user.update({
+      email,
+      phoneNumber,
+      emailVerifiedAt: new Date(),
+      phoneVerifiedAt: new Date()
+    });
+    return { user, token: signToken(user) };
+  }
+
   async requestPasswordReset(email) {
     const user = await User.findOne({ where: { email: email.trim().toLowerCase(), isActive: true } });
     if (!user) return { accepted: true };
