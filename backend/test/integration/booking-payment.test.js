@@ -8,7 +8,7 @@ const marker = `FLOW-${Date.now()}`;
 let adminToken; let customerToken;
 let categoryId; let destinationId; let tourId; let departureId; let voucherId; let inactiveVoucherId; let bookingId; let paymentId;
 let rejectedBookingId; let rejectedPaymentId;
-let expiredBookingId; let reconciledBookingId; let reconciledPaymentId; let reconciliationEventId;
+let expiredBookingId; let reconciledBookingId; let reconciledPaymentId; let reconciliationEventId; let reviewId;
 
 before(async () => {
   adminToken = await login();
@@ -37,6 +37,7 @@ before(async () => {
 });
 
 after(async () => {
+  if (reviewId) await db.Review.destroy({ where: { id: reviewId }, force: true });
   if (reconciliationEventId) await db.PaymentReconciliationEvent.destroy({ where: { id: reconciliationEventId } });
   if (reconciledPaymentId) await db.Payment.destroy({ where: { id: reconciledPaymentId } });
   if (reconciledBookingId) await db.Booking.destroy({ where: { id: reconciledBookingId } });
@@ -186,4 +187,62 @@ test('đối soát cùng mã giao dịch chỉ xác nhận thanh toán một l�
   assert.equal(replay.duplicate, true);
   assert.equal((await db.Booking.findByPk(reconciledBookingId)).status, 'CONFIRMED');
   assert.equal(await db.PaymentReconciliationEvent.count({ where: { source: 'INTEGRATION_TEST', externalTransactionId: transaction.externalTransactionId } }), 1);
+});
+
+test('khách chỉ đánh giá một lần cho đơn đã thanh toán thành công và có thể chỉnh sửa', async () => {
+  const created = await api.post('/api/reviews').set(auth(customerToken)).send({
+    bookingId: reconciledBookingId,
+    rating: 5,
+    comment: 'Lịch trình hợp lý và hướng dẫn viên nhiệt tình.'
+  }).expect(201);
+  reviewId = created.body.data.id;
+
+  await api.post('/api/reviews').set(auth(customerToken)).send({
+    bookingId: reconciledBookingId,
+    rating: 4,
+    comment: 'Đánh giá trùng.'
+  }).expect(409);
+
+  const updated = await api.put(`/api/reviews/${reviewId}`).set(auth(customerToken)).send({
+    rating: 4,
+    comment: 'Chuyến đi tốt, lịch trình rõ ràng.'
+  }).expect(200);
+  assert.equal(updated.body.data.rating, 4);
+
+  const publicReviews = await api.get(`/api/reviews/tour/${tourId}?page=1&limit=20`).expect(200);
+  assert.equal(publicReviews.body.data.items.some((item) => item.id === reviewId && item.rating === 4), true);
+
+  const booking = await api.get(`/api/bookings/${reconciledBookingId}`).set(auth(customerToken)).expect(200);
+  assert.equal(booking.body.data.review.id, reviewId);
+
+  const bookings = await api.get(`/api/bookings?tourId=${tourId}&paymentStatus=SUCCESS&page=1&limit=20`).set(auth(customerToken)).expect(200);
+  const reviewedBooking = bookings.body.data.items.find((item) => item.id === reconciledBookingId);
+  assert.equal(reviewedBooking.review.id, reviewId);
+});
+
+test('admin có thể tìm kiếm, chỉnh sửa và xóa đánh giá', async () => {
+  await api.get('/api/reviews').set(auth(customerToken)).expect(403);
+
+  const listed = await api.get('/api/reviews').set(auth(adminToken)).query({
+    page: 1,
+    limit: 20,
+    rating: 4,
+    keyword: 'Chuyến đi tốt',
+    sort: 'newest'
+  }).expect(200);
+  const review = listed.body.data.items.find((item) => item.id === reviewId);
+  assert.equal(review.user.email, 'khachhang@gmail.com');
+  assert.equal(review.tour.id, tourId);
+  assert.equal(review.booking.id, reconciledBookingId);
+
+  const updated = await api.put(`/api/reviews/${reviewId}`).set(auth(adminToken)).send({
+    rating: 3,
+    comment: 'Nội dung đã được quản trị viên cập nhật.'
+  }).expect(200);
+  assert.equal(updated.body.data.rating, 3);
+
+  await api.delete(`/api/reviews/${reviewId}`).set(auth(adminToken)).expect(200);
+  const publicReviews = await api.get(`/api/reviews/tour/${tourId}?page=1&limit=20`).expect(200);
+  assert.equal(publicReviews.body.data.items.some((item) => item.id === reviewId), false);
+  reviewId = undefined;
 });

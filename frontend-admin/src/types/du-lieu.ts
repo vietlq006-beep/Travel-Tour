@@ -177,6 +177,21 @@ export interface Booking {
   payments?: Payment[]
   activities?: BookingActivity[]
   changeRequests?: BookingChangeRequest[]
+  review?: Review | null
+}
+
+export interface Review {
+  id: EntityId
+  userId: EntityId
+  tourId: EntityId
+  bookingId: EntityId
+  rating: number
+  comment?: string | null
+  createdAt: string
+  updatedAt?: string
+  user?: User
+  tour?: Tour
+  booking?: Pick<Booking, 'id' | 'bookingCode' | 'status'>
 }
 
 export interface Payment {

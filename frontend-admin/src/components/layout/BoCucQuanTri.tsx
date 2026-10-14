@@ -2,6 +2,7 @@ import {
   BankOutlined,
   BookOutlined,
   CalendarOutlined,
+  CommentOutlined,
   DashboardOutlined,
   FileExcelOutlined,
   LogoutOutlined,
@@ -26,6 +27,7 @@ const NAV_ITEMS: MenuProps['items'] = [
   { key: '/customers', icon: <TeamOutlined />, label: 'Quản lý khách hàng' },
   { key: '/bookings', icon: <BookOutlined />, label: 'Điều hành booking' },
   { key: '/payments', icon: <BankOutlined />, label: 'Duyệt VietQR' },
+  { key: '/reviews', icon: <CommentOutlined />, label: 'Đánh giá & bình luận' },
   { key: '/reports', icon: <FileExcelOutlined />, label: 'Báo cáo Excel' },
 ]
 

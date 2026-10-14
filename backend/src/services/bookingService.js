@@ -138,8 +138,11 @@ class BookingService {
         include: [{ model: Tour, as: 'tour', attributes: ['id', 'code', 'name', 'thumbnail'] }]
       },
       { model: Voucher, as: 'voucher', attributes: ['id', 'code', 'discountType', 'discountValue'] },
+      { model: Review, as: 'review', attributes: ['id', 'rating', 'comment', 'createdAt'] },
       ...(user.role === 'ADMIN' ? [{ model: User, as: 'user', attributes: ['id', 'fullName', 'email', 'phoneNumber'] }] : []),
-      ...(query.paymentStatus ? [{ model: Payment, as: 'payments', where: { status: query.paymentStatus }, attributes: ['id', 'status'], required: true }] : [])
+      ...(query.paymentStatus
+        ? [{ model: Payment, as: 'payments', where: { status: query.paymentStatus }, attributes: ['id', 'status'], required: true }]
+        : [{ model: Payment, as: 'payments', attributes: ['id', 'status'] }])
     ];
     return toPaginatedResult(await Booking.findAndCountAll({
       where, include, distinct: true, limit, offset, order: [['bookingDate', 'DESC']]

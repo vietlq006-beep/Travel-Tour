@@ -37,6 +37,7 @@ export default function BookingsPage() {
   const [requestReason, setRequestReason] = useState('')
   const [requestedDepartureId, setRequestedDepartureId] = useState('')
   const [review, setReview] = useState({ rating: 5, comment: '' })
+  const [reviewEditing, setReviewEditing] = useState<EntityId | null>(null)
   const [rescheduleOptions, setRescheduleOptions] = useState<Record<string, Departure[]>>({})
 
   const load = useCallback(() => {
@@ -56,10 +57,21 @@ export default function BookingsPage() {
   }
 
   const toggleDetails = async (booking: Booking) => {
-    if (expanded === booking.id) { setExpanded(null); return }
+    if (expanded === booking.id) { setExpanded(null); setReviewEditing(null); return }
     setExpanded(booking.id)
     if (details[booking.id]) return
     try { await loadDetail(booking.id) } catch (requestError) { setError(apiError(requestError)) }
+  }
+
+  const openReview = async (booking: Booking) => {
+    setExpanded(booking.id)
+    setError('')
+    try {
+      const value = details[booking.id] || await loadDetail(booking.id)
+      setReview({ rating: value.review?.rating || 5, comment: value.review?.comment || '' })
+      setReviewEditing(value.review ? null : booking.id)
+      window.requestAnimationFrame(() => document.getElementById(`review-${booking.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+    } catch (requestError) { setError(apiError(requestError)) }
   }
 
   const cancelBooking = async (booking: Booking) => {
@@ -128,9 +140,14 @@ export default function BookingsPage() {
   const submitReview = async (bookingId: EntityId) => {
     setBusy(bookingId); setError('')
     try {
-      await api.post('/reviews', { bookingId, rating: review.rating, comment: review.comment.trim() || undefined })
-      setNotice('Cảm ơn bạn đã đánh giá chuyến đi.')
-      await loadDetail(bookingId)
+      const existing = details[bookingId]?.review
+      const payload = { rating: review.rating, comment: review.comment.trim() || undefined }
+      if (existing) await api.put(`/reviews/${existing.id}`, payload)
+      else await api.post('/reviews', { bookingId, ...payload })
+      const updated = await loadDetail(bookingId)
+      setBookings((current) => current.map((item) => item.id === bookingId ? { ...item, review: updated.review } : item))
+      setReviewEditing(null)
+      setNotice(existing ? 'Đã cập nhật đánh giá của bạn.' : 'Cảm ơn bạn đã đánh giá chuyến đi.')
     } catch (requestError) { setError(apiError(requestError)) } finally { setBusy(null) }
   }
 
@@ -159,6 +176,7 @@ export default function BookingsPage() {
                     <div className="mt-5 flex flex-wrap gap-2">
                       {booking.status === 'PENDING_PAYMENT' && <><button type="button" disabled={busy === booking.id} onClick={() => void pay(booking)} className="flex h-10 items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 text-sm font-bold text-white disabled:opacity-60"><CreditCard size={17} /> Thanh toán</button><button type="button" disabled={busy === booking.id} onClick={() => void cancelBooking(booking)} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-600 hover:border-rose-300 hover:text-rose-700"><XCircle size={17} /> Hủy đơn</button></>}
                       {['CONFIRMED', 'COMPLETED'].includes(booking.status) && <button type="button" disabled={busy === booking.id} onClick={() => void openTicket(booking)} className="flex h-10 items-center gap-2 rounded-xl bg-brand-700 px-4 text-sm font-bold text-white"><QrCode size={17} /> Vé QR</button>}
+                      {(booking.status === 'COMPLETED' || (booking.status === 'CONFIRMED' && booking.payments?.some((payment) => payment.status === 'SUCCESS'))) && <button type="button" disabled={busy === booking.id} onClick={() => void openReview(booking)} className="flex h-10 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-bold text-amber-700 transition hover:bg-amber-100"><Star size={17} className={booking.review ? 'fill-amber-400' : ''} /> {booking.review ? 'Xem đánh giá' : 'Đánh giá tour'}</button>}
                       <button type="button" onClick={() => void toggleDetails(booking)} className="ml-auto flex h-10 items-center gap-2 text-sm font-bold text-brand-700">Chi tiết {expanded === booking.id ? <ChevronUp size={17} /> : <ChevronDown size={17} />}</button>
                     </div>
                   </div>
@@ -171,7 +189,7 @@ export default function BookingsPage() {
                   </div>
                   {detail.policySnapshot && <details className="rounded-2xl bg-white p-4"><summary className="cursor-pointer font-extrabold">Chính sách đã chốt tại thời điểm đặt</summary><div className="mt-4 grid gap-4 text-sm leading-6 text-slate-600 md:grid-cols-2">{Object.entries(detail.policySnapshot).filter(([, value]) => value).map(([key, value]) => <div key={key}><strong className="block text-slate-800">{key.replace(/([A-Z])/g, ' $1')}</strong>{Array.isArray(value) ? value.join(', ') : String(value)}</div>)}</div></details>}
                   {['PENDING_PAYMENT', 'CONFIRMED'].includes(detail.status) && <div className="rounded-2xl bg-white p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-extrabold">Đổi lịch, hủy hoặc hoàn tiền</h3><p className="mt-1 text-sm text-slate-500">Đơn đã xác nhận sẽ được nhân viên xem xét theo chính sách đã chốt.</p></div><button type="button" onClick={() => void toggleRequestForm(detail)} className="rounded-xl border border-brand-200 px-4 py-2 text-sm font-bold text-brand-700">Tạo yêu cầu</button></div>{requestBookingId === detail.id && <div className="mt-4 grid gap-3 sm:grid-cols-2"><select value={requestType} onChange={(event) => setRequestType(event.target.value as typeof requestType)} className="h-11 rounded-xl border border-slate-200 px-3"><option value="CANCEL">Yêu cầu hủy</option><option value="RESCHEDULE">Đổi lịch khởi hành</option><option value="REFUND">Yêu cầu hoàn tiền</option></select>{requestType === 'RESCHEDULE' && <select value={requestedDepartureId} onChange={(event) => setRequestedDepartureId(event.target.value)} className="h-11 rounded-xl border border-slate-200 px-3"><option value="">Chọn lịch mới</option>{(rescheduleOptions[String(detail.id)] || []).map((item) => <option key={item.id} value={item.id}>{formatDate(item.startDate)} · còn {item.remainingSeats} chỗ</option>)}</select>}<textarea value={requestReason} onChange={(event) => setRequestReason(event.target.value)} placeholder="Nêu lý do (ít nhất 10 ký tự)" rows={3} className="rounded-xl border border-slate-200 p-3 sm:col-span-2" /><button type="button" disabled={busy === detail.id || (requestType === 'RESCHEDULE' && !requestedDepartureId)} onClick={() => void sendChangeRequest(detail.id)} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 font-bold text-white sm:col-span-2"><Send size={16} /> Gửi yêu cầu</button></div>}{detail.changeRequests?.map((item) => <p key={item.id} className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm"><strong>{REQUEST[item.requestType]}</strong> · {item.status} — {item.reason}</p>)}</div>}
-                  {detail.status === 'COMPLETED' && !detail.review && <div className="rounded-2xl bg-white p-4"><h3 className="font-extrabold">Đánh giá chuyến đi</h3><div className="mt-3 flex gap-1">{[1, 2, 3, 4, 5].map((value) => <button key={value} type="button" onClick={() => setReview((current) => ({ ...current, rating: value }))}><Star size={25} className={value <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} /></button>)}</div><textarea value={review.comment} onChange={(event) => setReview((current) => ({ ...current, comment: event.target.value }))} rows={3} placeholder="Chia sẻ trải nghiệm của bạn" className="mt-3 w-full rounded-xl border border-slate-200 p-3" /><button type="button" onClick={() => void submitReview(detail.id)} className="mt-3 rounded-xl bg-brand-700 px-5 py-2.5 font-bold text-white">Gửi đánh giá</button></div>}
+                  {(detail.status === 'COMPLETED' || (detail.status === 'CONFIRMED' && detail.payments?.some((payment) => payment.status === 'SUCCESS'))) && <div id={`review-${detail.id}`} className="scroll-mt-28 rounded-2xl border border-amber-100 bg-white p-4 sm:p-5">{detail.review && reviewEditing !== detail.id ? <><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-extrabold">Đánh giá của bạn</h3><div className="mt-2 flex gap-1 text-amber-400">{[1, 2, 3, 4, 5].map((value) => <Star key={value} size={21} className={value <= detail.review!.rating ? 'fill-current' : 'text-slate-200'} />)}</div></div><button type="button" onClick={() => { setReview({ rating: detail.review!.rating, comment: detail.review!.comment || '' }); setReviewEditing(detail.id) }} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:border-brand-300 hover:text-brand-700">Chỉnh sửa</button></div><p className="mt-4 text-sm leading-7 text-slate-600">{detail.review.comment || 'Bạn đã đánh giá chuyến đi này nhưng chưa để lại nhận xét.'}</p></> : <><h3 className="font-extrabold">{detail.review ? 'Chỉnh sửa đánh giá' : 'Đánh giá tour'}</h3><p className="mt-1 text-sm text-slate-500">Chọn từ 1 đến 5 sao và chia sẻ trải nghiệm của bạn.</p><div className="mt-3 flex gap-1">{[1, 2, 3, 4, 5].map((value) => <button key={value} type="button" aria-label={`${value} sao`} onClick={() => setReview((current) => ({ ...current, rating: value }))}><Star size={28} className={value <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} /></button>)}</div><textarea maxLength={2000} value={review.comment} onChange={(event) => setReview((current) => ({ ...current, comment: event.target.value }))} rows={4} placeholder="Chia sẻ trải nghiệm của bạn về lịch trình, dịch vụ và hướng dẫn viên..." className="mt-3 w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-brand-500" /><div className="mt-2 flex items-center justify-between gap-3"><span className="text-xs text-slate-400">{review.comment.length}/2000 ký tự</span><div className="flex gap-2">{detail.review && <button type="button" onClick={() => setReviewEditing(null)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600">Hủy</button>}<button type="button" disabled={busy === detail.id} onClick={() => void submitReview(detail.id)} className="rounded-xl bg-brand-700 px-5 py-2.5 font-bold text-white disabled:opacity-60">{busy === detail.id ? 'Đang gửi...' : detail.review ? 'Lưu đánh giá' : 'Gửi đánh giá'}</button></div></div></>}</div>}
                   {detail.activities?.length ? <details><summary className="cursor-pointer text-sm font-bold text-slate-600">Lịch sử trạng thái ({detail.activities.length})</summary><div className="mt-3 space-y-2">{detail.activities.map((item) => <div key={item.id} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"><strong>{item.eventType}</strong><span className="ml-2 text-slate-400">{formatDate(item.createdAt, { hour: '2-digit', minute: '2-digit' })}</span>{item.note && <p className="mt-1 text-slate-600">{item.note}</p>}</div>)}</div></details> : null}
                 </div> : <p className="text-sm text-slate-400">Đang tải chi tiết...</p>}</div>}
               </article>
